@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from django.views.generic import CreateView, TemplateView, View
 
 from accounts.permissions import CanAddDaroodMixin
@@ -62,8 +63,9 @@ class AddDaroodView(CanAddDaroodMixin, CreateView):
         response = super().form_valid(form)
         messages.success(
             self.request,
-            f'Recorded {entry.count} darood for {entry.user.full_name} '
-            f'on {entry.date:%d %b %Y}.',
+            _('Recorded %(count)s darood for %(name)s on %(date)s.') % {
+                'count': entry.count, 'name': entry.user.full_name,
+                'date': f'{entry.date:%d %b %Y}'},
         )
         return response
 
@@ -95,8 +97,10 @@ class SubmitDaroodView(LoginRequiredMixin, CreateView):
         response = super().form_valid(form)
         messages.success(
             self.request,
-            f'Submitted {entry.count} darood for {entry.date:%d %b %Y} to '
-            f'{entry.manager.full_name}. It will count once approved.',
+            _('Submitted %(count)s darood for %(date)s to %(manager)s. '
+              'It will count once approved.') % {
+                'count': entry.count, 'date': f'{entry.date:%d %b %Y}',
+                'manager': entry.manager.full_name},
         )
         return response
 
@@ -139,11 +143,11 @@ class ReviewEntryView(CanAddDaroodMixin, View):
 
         # Only the assigned manager (or a superadmin) may act on it.
         if not request.user.is_superadmin and entry.manager_id != request.user.pk:
-            messages.error(request, 'You cannot review this submission.')
+            messages.error(request, _('You cannot review this submission.'))
             return redirect('approvals')
 
         if not entry.is_pending:
-            messages.info(request, 'This submission has already been reviewed.')
+            messages.info(request, _('This submission has already been reviewed.'))
             return redirect('approvals')
 
         decision = request.POST.get('decision')
@@ -152,16 +156,16 @@ class ReviewEntryView(CanAddDaroodMixin, View):
         elif decision == 'reject':
             entry.status = DaroodEntry.Status.REJECTED
         else:
-            messages.error(request, 'Invalid decision.')
+            messages.error(request, _('Invalid decision.'))
             return redirect('approvals')
 
         entry.reviewed_at = timezone.now()
         entry.save(update_fields=['status', 'reviewed_at'])
-        verb = 'approved' if decision == 'approve' else 'rejected'
-        messages.success(
-            request,
-            f"{entry.user.full_name}'s {entry.count} darood ({entry.date:%d %b %Y}) {verb}.",
-        )
+        ctx = {'name': entry.user.full_name, 'count': entry.count, 'date': f'{entry.date:%d %b %Y}'}
+        if decision == 'approve':
+            messages.success(request, _("Approved %(name)s's %(count)s darood (%(date)s).") % ctx)
+        else:
+            messages.success(request, _("Rejected %(name)s's %(count)s darood (%(date)s).") % ctx)
         return redirect('approvals')
 
 

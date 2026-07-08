@@ -1,15 +1,16 @@
 {% extends 'base.html' %}
-{% block title %}Overview · Darood Collection{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Overview" %} · {% trans "Darood Collection" %}{% endblock %}
 
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
     <div>
-        <h1 class="h3 fw-bold mb-0">Collection Overview</h1>
-        <p class="text-muted mb-0">All users' darood, filtered by period.</p>
+        <h1 class="h3 fw-bold mb-0">{% trans "Collection Overview" %}</h1>
+        <p class="text-muted mb-0">{% trans "All users' darood, filtered by period." %}</p>
     </div>
     <div class="d-flex flex-wrap gap-2 align-items-center">
-        <a href="{% url 'add_user' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-person-plus"></i> Add User</a>
-        <a href="{% url 'add_darood' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> Add Darood</a>
+        <a href="{% url 'add_user' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-person-plus"></i> {% trans "Add User" %}</a>
+        <a href="{% url 'add_darood' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> {% trans "Add Darood" %}</a>
         {% include 'darood/_period_nav.html' %}
     </div>
 </div>
@@ -17,19 +18,19 @@
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <div class="card stat-card h-100"><div class="card-body d-flex justify-content-between align-items-center">
-            <div><div class="text-muted small">Total Darood</div><div class="stat-value">{{ total }}</div></div>
+            <div><div class="text-muted small">{% trans "Total Darood" %}</div><div class="stat-value">{{ total }}</div></div>
             <i class="bi bi-stars stat-icon text-warning"></i>
         </div></div>
     </div>
     <div class="col-md-4">
         <div class="card stat-card h-100"><div class="card-body d-flex justify-content-between align-items-center">
-            <div><div class="text-muted small">Entries</div><div class="stat-value">{{ entry_count }}</div></div>
+            <div><div class="text-muted small">{% trans "Entries" %}</div><div class="stat-value">{{ entry_count }}</div></div>
             <i class="bi bi-journal-text stat-icon text-primary"></i>
         </div></div>
     </div>
     <div class="col-md-4">
         <div class="card stat-card h-100"><div class="card-body d-flex justify-content-between align-items-center">
-            <div><div class="text-muted small">Contributors</div><div class="stat-value">{{ contributor_count }}</div></div>
+            <div><div class="text-muted small">{% trans "Contributors" %}</div><div class="stat-value">{{ contributor_count }}</div></div>
             <i class="bi bi-people stat-icon text-success"></i>
         </div></div>
     </div>
@@ -38,7 +39,7 @@
 <div class="row g-4">
     <div class="col-lg-5">
         <div class="card h-100"><div class="card-body">
-            <h2 class="h5 fw-semibold mb-3"><i class="bi bi-trophy"></i> Leaderboard</h2>
+            <h2 class="h5 fw-semibold mb-3"><i class="bi bi-trophy"></i> {% trans "Leaderboard" %}</h2>
             <ol class="list-group list-group-numbered list-group-flush">
             {% for row in leaderboard %}
                 <li class="list-group-item d-flex justify-content-between align-items-center px-0">
@@ -47,7 +48,7 @@
                     <span class="badge text-bg-success rounded-pill">{{ row.total }}</span>
                 </li>
             {% empty %}
-                <li class="list-group-item text-muted px-0">No entries in this period.</li>
+                <li class="list-group-item text-muted px-0">{% trans "No entries in this period." %}</li>
             {% endfor %}
             </ol>
         </div></div>
@@ -55,10 +56,10 @@
 
     <div class="col-lg-7">
         <div class="card h-100"><div class="card-body">
-            <h2 class="h5 fw-semibold mb-3"><i class="bi bi-clock-history"></i> Recent Entries</h2>
+            <h2 class="h5 fw-semibold mb-3"><i class="bi bi-clock-history"></i> {% trans "Recent Entries" %}</h2>
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
-                    <thead><tr><th>User</th><th>Date</th><th>Recorded by</th><th class="text-end">Count</th></tr></thead>
+                    <thead><tr><th>{% trans "User" %}</th><th>{% trans "Date" %}</th><th>{% trans "Recorded by" %}</th><th class="text-end">{% trans "Count" %}</th></tr></thead>
                     <tbody>
                     {% for e in recent %}
                         <tr>
@@ -68,7 +69,7 @@
                             <td class="text-end fw-semibold">{{ e.count }}</td>
                         </tr>
                     {% empty %}
-                        <tr><td colspan="4" class="text-center text-muted py-4">No entries in this period.</td></tr>
+                        <tr><td colspan="4" class="text-center text-muted py-4">{% trans "No entries in this period." %}</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>

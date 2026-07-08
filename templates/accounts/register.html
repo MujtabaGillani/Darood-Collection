@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-{% block title %}Register · Darood Collection{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Register" %} · {% trans "Darood Collection" %}{% endblock %}
 {% block main_class %}auth-wrap{% endblock %}
 
 {% block messages %}{% endblock %}
@@ -11,34 +12,34 @@
         <div class="astana-name astana-name-card">آستانہ عالیہ کشفیہ نظامیہ</div>
         <div class="text-center mb-4">
             <div class="display-6 auth-brand"><i class="bi bi-person-plus"></i></div>
-            <h1 class="h4 fw-bold mt-2 mb-1">Create an account</h1>
-            <p class="text-muted small mb-0">Accounts require admin approval before first login</p>
+            <h1 class="h4 fw-bold mt-2 mb-1">{% trans "Create an account" %}</h1>
+            <p class="text-muted small mb-0">{% trans "Accounts require admin approval before first login" %}</p>
         </div>
 
         <form method="post" novalidate>
             {% csrf_token %}
 
             <div class="mb-3">
-                <label class="form-label" for="{{ form.username.id_for_label }}">Username</label>
+                <label class="form-label" for="{{ form.username.id_for_label }}">{% trans "Username" %}</label>
                 {{ form.username }}
                 {% for e in form.username.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
             </div>
 
             <div class="row">
                 <div class="col-6 mb-3">
-                    <label class="form-label" for="{{ form.first_name.id_for_label }}">First name</label>
+                    <label class="form-label" for="{{ form.first_name.id_for_label }}">{% trans "First name" %}</label>
                     {{ form.first_name }}
                     {% for e in form.first_name.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
                 </div>
                 <div class="col-6 mb-3">
-                    <label class="form-label" for="{{ form.last_name.id_for_label }}">Last name</label>
+                    <label class="form-label" for="{{ form.last_name.id_for_label }}">{% trans "Last name" %}</label>
                     {{ form.last_name }}
                     {% for e in form.last_name.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
                 </div>
             </div>
 
             <div class="mb-3">
-                <label class="form-label" for="{{ form.password1.id_for_label }}">Password</label>
+                <label class="form-label" for="{{ form.password1.id_for_label }}">{% trans "Password" %}</label>
                 <div class="input-group">
                     {{ form.password1 }}
                     <button class="btn btn-outline-secondary toggle-password" type="button"
@@ -51,7 +52,7 @@
             </div>
 
             <div class="mb-3">
-                <label class="form-label" for="{{ form.password2.id_for_label }}">Confirm password</label>
+                <label class="form-label" for="{{ form.password2.id_for_label }}">{% trans "Confirm password" %}</label>
                 <div class="input-group">
                     {{ form.password2 }}
                     <button class="btn btn-outline-secondary toggle-password" type="button"
@@ -64,12 +65,12 @@
             </div>
 
             <button type="submit" class="btn btn-primary w-100">
-                <i class="bi bi-check2-circle"></i> Register
+                <i class="bi bi-check2-circle"></i> {% trans "Register" %}
             </button>
         </form>
 
         <p class="text-center text-muted small mt-4 mb-0">
-            Already registered? <a href="{% url 'login' %}">Login</a>
+            {% trans "Already registered?" %} <a href="{% url 'login' %}">{% trans "Login" %}</a>
         </p>
     </div>
 </div>

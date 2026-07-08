@@ -1,13 +1,14 @@
 {% extends 'base.html' %}
-{% block title %}Add Darood · Darood Collection{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Add Darood" %} · {% trans "Darood Collection" %}{% endblock %}
 
 {% block content %}
 <div class="row g-4">
     <div class="col-lg-6">
         <div class="card">
             <div class="card-body p-4">
-                <h1 class="h4 fw-bold mb-1"><i class="bi bi-plus-circle"></i> Record Darood</h1>
-                <p class="text-muted small">Search a user, pick the date, and enter the count.</p>
+                <h1 class="h4 fw-bold mb-1"><i class="bi bi-plus-circle"></i> {% trans "Record Darood" %}</h1>
+                <p class="text-muted small">{% trans "Search a user, pick the date, and enter the count." %}</p>
 
                 {% if form.non_field_errors %}
                 <div class="alert alert-danger py-2 small">{{ form.non_field_errors }}</div>
@@ -19,13 +20,13 @@
                     <!-- User search -->
                     <div class="mb-3 position-relative">
                         <div class="d-flex justify-content-between align-items-center">
-                            <label class="form-label mb-1">User</label>
+                            <label class="form-label mb-1">{% trans "User" %}</label>
                             <a href="{% url 'add_user' %}" class="small text-decoration-none">
-                                <i class="bi bi-person-plus"></i> Add new user
+                                <i class="bi bi-person-plus"></i> {% trans "Add new user" %}
                             </a>
                         </div>
                         <input type="text" id="user-search" class="form-control"
-                               placeholder="Type a name or username…" autocomplete="off">
+                               placeholder="{% trans 'Type a name or username…' %}" autocomplete="off">
                         <div class="search-results" id="search-results"></div>
                         {{ form.user }}  {# hidden input holding the selected id #}
                         {% for e in form.user.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
@@ -34,24 +35,24 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <span><i class="bi bi-person-check"></i> <strong id="selected-name"></strong>
                                     <small class="text-muted" id="selected-username"></small></span>
-                                <button type="button" class="btn btn-sm btn-link text-danger p-0" id="clear-user">Change</button>
+                                <button type="button" class="btn btn-sm btn-link text-danger p-0" id="clear-user">{% trans "Change" %}</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label" for="{{ form.date.id_for_label }}">Date</label>
+                        <label class="form-label" for="{{ form.date.id_for_label }}">{% trans "Date" %}</label>
                         {{ form.date }}
                         {% for e in form.date.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label" for="{{ form.count.id_for_label }}">Quantity</label>
+                        <label class="form-label" for="{{ form.count.id_for_label }}">{% trans "Quantity" %}</label>
                         {{ form.count }}
                         {% for e in form.count.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save"></i> Save Entry</button>
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save"></i> {% trans "Save Entry" %}</button>
                 </form>
             </div>
         </div>
@@ -60,10 +61,10 @@
     <div class="col-lg-6">
         <div class="card">
             <div class="card-body p-4">
-                <h2 class="h5 fw-semibold mb-3"><i class="bi bi-clock-history"></i> Your Recent Entries</h2>
+                <h2 class="h5 fw-semibold mb-3"><i class="bi bi-clock-history"></i> {% trans "Your Recent Entries" %}</h2>
                 <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0">
-                        <thead><tr><th>User</th><th>Date</th><th class="text-end">Count</th></tr></thead>
+                        <thead><tr><th>{% trans "User" %}</th><th>{% trans "Date" %}</th><th class="text-end">{% trans "Count" %}</th></tr></thead>
                         <tbody>
                         {% for e in recent %}
                             <tr>
@@ -72,7 +73,7 @@
                                 <td class="text-end fw-semibold">{{ e.count }}</td>
                             </tr>
                         {% empty %}
-                            <tr><td colspan="3" class="text-center text-muted py-4">No entries recorded yet.</td></tr>
+                            <tr><td colspan="3" class="text-center text-muted py-4">{% trans "No entries recorded yet." %}</td></tr>
                         {% endfor %}
                         </tbody>
                     </table>

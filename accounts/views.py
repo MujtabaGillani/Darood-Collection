@@ -5,6 +5,7 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
+from django.utils.translation import gettext as _
 from django.views.generic import CreateView, RedirectView, TemplateView, View
 
 from .forms import (
@@ -54,8 +55,8 @@ class RegisterView(CreateView):
         response = super().form_valid(form)
         messages.success(
             self.request,
-            'Registration successful! Your account is pending approval by an '
-            'administrator. You will be able to log in once it is activated.',
+            _('Registration successful! Your account is pending approval by an '
+              'administrator. You will be able to log in once it is activated.'),
         )
         return response
 
@@ -92,8 +93,9 @@ class AddSimpleUserView(CanAddDaroodMixin, CreateView):
         response = super().form_valid(form)
         messages.success(
             self.request,
-            f'User "{self.object.username}" created as a Simple User '
-            f'(password: {QUICK_ADD_DEFAULT_PASSWORD}). You can now record their darood.',
+            _('User "%(name)s" created as a Simple User (password: %(pwd)s). '
+              'You can now record their darood.') % {
+                'name': self.object.username, 'pwd': QUICK_ADD_DEFAULT_PASSWORD},
         )
         return response
 
@@ -144,14 +146,16 @@ class UpdateUserView(SuperadminRequiredMixin, View):
         # Protect super admin accounts: they can't be deactivated or re-roled
         # through this UI (prevents an admin from locking everyone out).
         if target.is_superadmin:
-            messages.error(request, 'Super Admin accounts cannot be modified here.')
+            messages.error(request, _('Super Admin accounts cannot be modified here.'))
             return redirect('dashboard')
 
         if action == 'toggle_active':
             target.is_active = not target.is_active
             target.save(update_fields=['is_active'])
-            state = 'activated' if target.is_active else 'deactivated'
-            messages.success(request, f'{target.full_name} has been {state}.')
+            if target.is_active:
+                messages.success(request, _('%(name)s has been activated.') % {'name': target.full_name})
+            else:
+                messages.success(request, _('%(name)s has been deactivated.') % {'name': target.full_name})
 
         elif action == 'set_role':
             role = request.POST.get('role')
@@ -162,11 +166,12 @@ class UpdateUserView(SuperadminRequiredMixin, View):
                 target.is_superuser = False
                 target.save(update_fields=['role', 'is_superuser', 'is_staff'])
                 messages.success(
-                    request, f'{target.full_name} is now a {target.get_role_display()}.'
+                    request, _('%(name)s is now a %(role)s.') % {
+                        'name': target.full_name, 'role': target.get_role_display()}
                 )
             else:
-                messages.error(request, 'You can only assign Simple User or Manager.')
+                messages.error(request, _('You can only assign Simple User or Manager.'))
         else:
-            messages.error(request, 'Unknown action.')
+            messages.error(request, _('Unknown action.'))
 
         return redirect('dashboard')

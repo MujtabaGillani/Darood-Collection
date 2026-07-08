@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
-{% block title %}Submit Darood · Darood Collection{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Submit Darood" %} · {% trans "Darood Collection" %}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-6">
         <div class="card">
             <div class="card-body p-4">
-                <h1 class="h4 fw-bold mb-1"><i class="bi bi-plus-circle"></i> Submit Your Darood</h1>
+                <h1 class="h4 fw-bold mb-1"><i class="bi bi-plus-circle"></i> {% trans "Submit Your Darood" %}</h1>
                 <p class="text-muted small">
-                    Choose your manager, the date, and how many darood you recited.
-                    Your manager will review it — it counts once approved.
+                    {% trans "Choose your manager, the date, and how many darood you recited. Your manager will review it — it counts once approved." %}
                 </p>
 
                 {% if form.non_field_errors %}
@@ -20,25 +20,25 @@
                     {% csrf_token %}
 
                     <div class="mb-3">
-                        <label class="form-label" for="{{ form.manager.id_for_label }}">Send to manager</label>
+                        <label class="form-label" for="{{ form.manager.id_for_label }}">{% trans "Send to manager" %}</label>
                         {{ form.manager }}
                         {% for e in form.manager.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label" for="{{ form.date.id_for_label }}">Date</label>
+                        <label class="form-label" for="{{ form.date.id_for_label }}">{% trans "Date" %}</label>
                         {{ form.date }}
                         {% for e in form.date.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label" for="{{ form.count.id_for_label }}">Quantity</label>
+                        <label class="form-label" for="{{ form.count.id_for_label }}">{% trans "Quantity" %}</label>
                         {{ form.count }}
                         {% for e in form.count.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
                     </div>
 
                     <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-send"></i> Submit for Approval
+                        <i class="bi bi-send"></i> {% trans "Submit for Approval" %}
                     </button>
                 </form>
             </div>

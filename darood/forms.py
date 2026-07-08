@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from .models import DaroodEntry
 
@@ -64,7 +65,7 @@ class AddDaroodForm(NoFutureDateMixin, forms.ModelForm):
         self.fields['date'].widget.attrs['max'] = timezone.localdate().isoformat()
         if request_user is not None:
             self.fields['user'].queryset = addable_users_queryset(request_user)
-        self.fields['user'].error_messages['required'] = 'Please search and select a user.'
+        self.fields['user'].error_messages['required'] = _('Please search and select a user.')
 
 
 class SubmitDaroodForm(NoFutureDateMixin, forms.ModelForm):
@@ -82,7 +83,7 @@ class SubmitDaroodForm(NoFutureDateMixin, forms.ModelForm):
                 attrs={'class': 'form-control', 'min': 1, 'placeholder': 'e.g. 500'}
             ),
         }
-        labels = {'manager': 'Send to manager'}
+        labels = {'manager': _('Send to manager')}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -90,5 +91,5 @@ class SubmitDaroodForm(NoFutureDateMixin, forms.ModelForm):
         self.fields['date'].widget.attrs['max'] = timezone.localdate().isoformat()
         self.fields['manager'].queryset = managers_queryset()
         self.fields['manager'].required = True
-        self.fields['manager'].empty_label = 'Select your manager…'
+        self.fields['manager'].empty_label = _('Select your manager…')
         self.fields['manager'].widget.attrs['class'] = 'form-select'

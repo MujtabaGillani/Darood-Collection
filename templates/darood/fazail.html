@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-{% block title %}Fazail-e-Darood · Darood Collection{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Fazail-e-Darood" %} · {% trans "Darood Collection" %}{% endblock %}
 
 {% block head_extra %}
 <style>
@@ -112,7 +113,7 @@
     <header class="text-center">
         <div class="fz-divider"><span class="line"></span><span class="star">۞</span><span class="line"></span></div>
         <h1 class="fz-title">درود شریف کے فضائل</h1>
-        <p class="fz-sub mb-4">Verified Hadiths on the Virtue of Sending Blessings upon the Prophet ﷺ</p>
+        <p class="fz-sub mb-4">{% trans "Verified Hadiths on the Virtue of Sending Blessings upon the Prophet ﷺ" %}</p>
         <p class="fz-intro">
             یہاں درود شریف کی فضیلت سے متعلق مستند احادیث درج کی گئی ہیں۔ ہر حدیث کے ساتھ اس کا اصل حوالہ
             (کتاب اور حدیث نمبر) دیا گیا ہے تاکہ آپ خود بھی اسے جانچ سکیں۔ یہ فہرست صرف ان احادیث پر مشتمل ہے

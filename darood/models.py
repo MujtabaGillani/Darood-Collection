@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 class DaroodEntry(models.Model):
@@ -15,9 +16,9 @@ class DaroodEntry(models.Model):
     """
 
     class Status(models.TextChoices):
-        PENDING = 'pending', 'Pending'
-        APPROVED = 'approved', 'Approved'
-        REJECTED = 'rejected', 'Rejected'
+        PENDING = 'pending', _('Pending')
+        APPROVED = 'approved', _('Approved')
+        REJECTED = 'rejected', _('Rejected')
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

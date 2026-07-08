@@ -1,0 +1,388 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Darood Collection\n"
+"Report-Msgid-Bugs-To: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ur\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# --- Brand / navbar / footer ---
+msgid "Darood Collection"
+msgstr "درود کلیکشن"
+
+msgid "Approvals"
+msgstr "منظوریاں"
+
+msgid "Overview"
+msgstr "مجموعی جائزہ"
+
+msgid "My Progress"
+msgstr "میری کارکردگی"
+
+msgid "Fazail-e-Darood"
+msgstr "فضائلِ درود"
+
+msgid "Dashboard"
+msgstr "ڈیش بورڈ"
+
+msgid "Change language"
+msgstr "زبان تبدیل کریں"
+
+msgid "Logout"
+msgstr "لاگ آؤٹ"
+
+msgid "Darood Collection · May our Salawat upon the Prophet ﷺ be accepted."
+msgstr "درود کلیکشن · اللہ ہمارے درود قبول فرمائے۔"
+
+# --- Login ---
+msgid "Login"
+msgstr "لاگ اِن"
+
+msgid "Sign in to continue"
+msgstr "جاری رکھنے کے لیے سائن اِن کریں"
+
+msgid "Username"
+msgstr "یوزر نیم"
+
+msgid "Password"
+msgstr "پاس ورڈ"
+
+msgid "Remember me"
+msgstr "مجھے یاد رکھیں"
+
+msgid "No account?"
+msgstr "اکاؤنٹ نہیں ہے؟"
+
+msgid "Register here"
+msgstr "یہاں رجسٹر کریں"
+
+# --- Register ---
+msgid "Register"
+msgstr "رجسٹر کریں"
+
+msgid "Create an account"
+msgstr "نیا اکاؤنٹ بنائیں"
+
+msgid "Accounts require admin approval before first login"
+msgstr "پہلی بار لاگ اِن سے قبل اکاؤنٹ کی منظوری ضروری ہے"
+
+msgid "First name"
+msgstr "پہلا نام"
+
+msgid "Last name"
+msgstr "آخری نام"
+
+msgid "Confirm password"
+msgstr "پاس ورڈ کی تصدیق"
+
+msgid "Already registered?"
+msgstr "پہلے سے رجسٹرڈ ہیں؟"
+
+# --- Dashboard ---
+msgid "Super Admin Dashboard"
+msgstr "سپر ایڈمن ڈیش بورڈ"
+
+msgid "Manage users and monitor daily collection."
+msgstr "صارفین کا انتظام کریں اور روزانہ کے مجموعے کی نگرانی کریں۔"
+
+msgid "Add User"
+msgstr "صارف شامل کریں"
+
+msgid "Add Darood"
+msgstr "درود شامل کریں"
+
+msgid "Total Darood"
+msgstr "کل درود"
+
+msgid "Total Users"
+msgstr "کل صارفین"
+
+msgid "Active"
+msgstr "فعال"
+
+msgid "Pending"
+msgstr "زیرِ التوا"
+
+msgid "Top Collector (Manager)"
+msgstr "سرِفہرست جمع کنندہ (مینیجر)"
+
+msgid "darood collected"
+msgstr "درود جمع کیے"
+
+msgid "Top Reciter (User)"
+msgstr "سرِفہرست پڑھنے والا (صارف)"
+
+msgid "darood"
+msgstr "درود"
+
+msgid "Collection Trend"
+msgstr "مجموعے کا رجحان"
+
+msgid "All · by manager"
+msgstr "تمام · بلحاظ مینیجر"
+
+msgid "Today"
+msgstr "آج"
+
+msgid "Last 3 Days"
+msgstr "پچھلے 3 دن"
+
+msgid "Last 7 Days"
+msgstr "پچھلے 7 دن"
+
+msgid "By Weeks"
+msgstr "بلحاظ ہفتہ"
+
+msgid "By Months"
+msgstr "بلحاظ مہینہ"
+
+msgid "By Years"
+msgstr "بلحاظ سال"
+
+msgid "User Management"
+msgstr "صارفین کا انتظام"
+
+msgid "Name"
+msgstr "نام"
+
+msgid "Role"
+msgstr "کردار"
+
+msgid "Status"
+msgstr "حیثیت"
+
+msgid "Actions"
+msgstr "اقدامات"
+
+msgid "Super Admin"
+msgstr "سپر ایڈمن"
+
+msgid "Deactivate"
+msgstr "غیر فعال کریں"
+
+msgid "Activate"
+msgstr "فعال کریں"
+
+# --- Add Darood ---
+msgid "Record Darood"
+msgstr "درود درج کریں"
+
+msgid "Search a user, pick the date, and enter the count."
+msgstr "صارف تلاش کریں، تاریخ منتخب کریں، اور تعداد درج کریں۔"
+
+msgid "User"
+msgstr "صارف"
+
+msgid "Add new user"
+msgstr "نیا صارف شامل کریں"
+
+msgid "Type a name or username…"
+msgstr "نام یا یوزر نیم لکھیں…"
+
+msgid "Change"
+msgstr "تبدیل کریں"
+
+msgid "Date"
+msgstr "تاریخ"
+
+msgid "Quantity"
+msgstr "تعداد"
+
+msgid "Save Entry"
+msgstr "اندراج محفوظ کریں"
+
+msgid "Your Recent Entries"
+msgstr "آپ کے حالیہ اندراجات"
+
+msgid "Count"
+msgstr "گنتی"
+
+msgid "No entries recorded yet."
+msgstr "ابھی کوئی اندراج درج نہیں ہوا۔"
+
+# --- Submit Darood ---
+msgid "Submit Darood"
+msgstr "درود جمع کرائیں"
+
+msgid "Submit Your Darood"
+msgstr "اپنا درود جمع کرائیں"
+
+msgid "Choose your manager, the date, and how many darood you recited. Your manager will review it — it counts once approved."
+msgstr "اپنا مینیجر، تاریخ، اور آپ نے کتنے درود پڑھے منتخب کریں۔ آپ کا مینیجر اس کا جائزہ لے گا — منظوری کے بعد یہ شمار ہوگا۔"
+
+msgid "Send to manager"
+msgstr "مینیجر کو بھیجیں"
+
+msgid "Submit for Approval"
+msgstr "منظوری کے لیے جمع کرائیں"
+
+msgid "Select your manager…"
+msgstr "اپنا مینیجر منتخب کریں…"
+
+# --- Approvals ---
+msgid "Review darood submitted by users. Approved entries start counting immediately."
+msgstr "صارفین کے جمع کردہ درود کا جائزہ لیں۔ منظور شدہ اندراجات فوراً شمار ہونا شروع ہو جاتے ہیں۔"
+
+msgid "Action"
+msgstr "عمل"
+
+msgid "Approve"
+msgstr "منظور کریں"
+
+msgid "Reject"
+msgstr "مسترد کریں"
+
+msgid "Nothing awaiting review."
+msgstr "جائزے کے لیے کچھ باقی نہیں۔"
+
+msgid "Recently Reviewed"
+msgstr "حال ہی میں جائزہ شدہ"
+
+msgid "Approved"
+msgstr "منظور شدہ"
+
+msgid "Rejected"
+msgstr "مسترد شدہ"
+
+msgid "No reviews yet."
+msgstr "ابھی کوئی جائزہ نہیں۔"
+
+# --- Overview ---
+msgid "Collection Overview"
+msgstr "مجموعے کا جائزہ"
+
+msgid "All users' darood, filtered by period."
+msgstr "تمام صارفین کا درود، مدت کے لحاظ سے۔"
+
+msgid "Entries"
+msgstr "اندراجات"
+
+msgid "Contributors"
+msgstr "شرکاء"
+
+msgid "Leaderboard"
+msgstr "درجہ بندی"
+
+msgid "No entries in this period."
+msgstr "اس مدت میں کوئی اندراج نہیں۔"
+
+msgid "Recent Entries"
+msgstr "حالیہ اندراجات"
+
+msgid "Recorded by"
+msgstr "درج کرنے والا"
+
+# --- My Progress ---
+msgid "Assalamu alaikum, %(name)s."
+msgstr "السلام علیکم، %(name)s۔"
+
+msgid "You have <strong>%(pending_count)s</strong> submission(s) awaiting your manager's approval. They don't count yet."
+msgstr "آپ کے <strong>%(pending_count)s</strong> اندراج مینیجر کی منظوری کے منتظر ہیں۔ یہ ابھی شمار نہیں ہوتے۔"
+
+msgid "Darood this period"
+msgstr "اس مدت کا درود"
+
+msgid "Trend"
+msgstr "رجحان"
+
+msgid "My Submissions"
+msgstr "میرے اندراجات"
+
+msgid "Manager"
+msgstr "مینیجر"
+
+msgid "No submissions yet."
+msgstr "ابھی کوئی اندراج نہیں۔"
+
+# --- Add User ---
+msgid "Add a Simple User"
+msgstr "ایک سادہ صارف شامل کریں"
+
+msgid "Only a username is required. The account is created active with the default password <code>%(default_password)s</code>, so you can start recording their darood right away."
+msgstr "صرف یوزر نیم درکار ہے۔ اکاؤنٹ فعال حالت میں بنتا ہے اور ڈیفالٹ پاس ورڈ <code>%(default_password)s</code> ہوتا ہے، تاکہ آپ فوراً اُن کا درود درج کرنا شروع کر سکیں۔"
+
+msgid "optional"
+msgstr "اختیاری"
+
+msgid "Default password:"
+msgstr "ڈیفالٹ پاس ورڈ:"
+
+msgid "share it with the user; they can log in and view their own progress."
+msgstr "اسے صارف کے ساتھ شیئر کریں؛ وہ لاگ اِن کر کے اپنی کارکردگی دیکھ سکتے ہیں۔"
+
+msgid "Create User"
+msgstr "صارف بنائیں"
+
+msgid "Cancel"
+msgstr "منسوخ کریں"
+
+# --- Fazail ---
+msgid "Verified Hadiths on the Virtue of Sending Blessings upon the Prophet ﷺ"
+msgstr "نبی ﷺ پر درود بھیجنے کی فضیلت پر مستند احادیث"
+
+# --- Roles / periods ---
+msgid "Simple User"
+msgstr "سادہ صارف"
+
+msgid "This Week"
+msgstr "اس ہفتہ"
+
+msgid "This Month"
+msgstr "اس مہینہ"
+
+msgid "This Year"
+msgstr "اس سال"
+
+msgid "All Time"
+msgstr "تمام وقت"
+
+# --- Flash messages ---
+msgid "Registration successful! Your account is pending approval by an administrator. You will be able to log in once it is activated."
+msgstr "رجسٹریشن کامیاب! آپ کا اکاؤنٹ منتظم کی منظوری کا منتظر ہے۔ فعال ہونے کے بعد آپ لاگ اِن کر سکیں گے۔"
+
+msgid "User \"%(name)s\" created as a Simple User (password: %(pwd)s). You can now record their darood."
+msgstr "صارف \"%(name)s\" سادہ صارف کے طور پر بن گیا (پاس ورڈ: %(pwd)s)۔ اب آپ اُن کا درود درج کر سکتے ہیں۔"
+
+msgid "Super Admin accounts cannot be modified here."
+msgstr "سپر ایڈمن اکاؤنٹس یہاں تبدیل نہیں کیے جا سکتے۔"
+
+msgid "%(name)s has been activated."
+msgstr "%(name)s کو فعال کر دیا گیا۔"
+
+msgid "%(name)s has been deactivated."
+msgstr "%(name)s کو غیر فعال کر دیا گیا۔"
+
+msgid "%(name)s is now a %(role)s."
+msgstr "%(name)s اب %(role)s ہے۔"
+
+msgid "You can only assign Simple User or Manager."
+msgstr "آپ صرف سادہ صارف یا مینیجر تفویض کر سکتے ہیں۔"
+
+msgid "Unknown action."
+msgstr "نامعلوم عمل۔"
+
+msgid "Recorded %(count)s darood for %(name)s on %(date)s."
+msgstr "%(name)s کے لیے %(date)s کو %(count)s درود درج کیے گئے۔"
+
+msgid "Submitted %(count)s darood for %(date)s to %(manager)s. It will count once approved."
+msgstr "%(date)s کے لیے %(count)s درود %(manager)s کو جمع کرا دیے گئے۔ منظوری کے بعد یہ شمار ہوں گے۔"
+
+msgid "You cannot review this submission."
+msgstr "آپ اس اندراج کا جائزہ نہیں لے سکتے۔"
+
+msgid "This submission has already been reviewed."
+msgstr "اس اندراج کا جائزہ پہلے ہی لیا جا چکا ہے۔"
+
+msgid "Invalid decision."
+msgstr "غلط فیصلہ۔"
+
+msgid "Approved %(name)s's %(count)s darood (%(date)s)."
+msgstr "%(name)s کے %(count)s درود (%(date)s) منظور کر لیے گئے۔"
+
+msgid "Rejected %(name)s's %(count)s darood (%(date)s)."
+msgstr "%(name)s کے %(count)s درود (%(date)s) مسترد کر دیے گئے۔"
+
+msgid "Please search and select a user."
+msgstr "براہِ کرم صارف تلاش کر کے منتخب کریں۔"

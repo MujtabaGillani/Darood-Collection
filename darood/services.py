@@ -4,14 +4,15 @@ from datetime import date, timedelta
 
 from django.db.models import Sum
 from django.db.models.functions import TruncDay, TruncMonth, TruncWeek, TruncYear
+from django.utils.translation import gettext_lazy as _
 
 # Supported reporting periods (label shown in the UI -> key used in querystrings).
 PERIODS = [
-    ('day', 'Today'),
-    ('week', 'This Week'),
-    ('month', 'This Month'),
-    ('year', 'This Year'),
-    ('all', 'All Time'),
+    ('day', _('Today')),
+    ('week', _('This Week')),
+    ('month', _('This Month')),
+    ('year', _('This Year')),
+    ('all', _('All Time')),
 ]
 VALID_PERIODS = {key for key, _ in PERIODS}
 
