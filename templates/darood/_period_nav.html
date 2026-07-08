@@ -1,0 +1,7 @@
+{# Reusable period filter pills. Expects `periods` and `period` in context. #}
+<div class="btn-group btn-group-sm flex-wrap" role="group">
+    {% for key, label in periods %}
+    <a href="?period={{ key }}"
+       class="btn {% if period == key %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ label }}</a>
+    {% endfor %}
+</div>

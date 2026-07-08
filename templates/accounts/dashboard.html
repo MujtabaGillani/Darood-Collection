@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard · Darood Collection{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+        <h1 class="h3 fw-bold mb-0">Super Admin Dashboard</h1>
+        <p class="text-muted mb-0">Manage users and monitor daily collection.</p>
+    </div>
+    <a href="{% url 'add_darood' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add Darood</a>
+</div>
+
+<!-- Stat tiles -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card h-100"><div class="card-body d-flex justify-content-between align-items-center">
+            <div><div class="text-muted small">Total Darood</div><div class="stat-value">{{ grand_total }}</div></div>
+            <i class="bi bi-stars stat-icon text-warning"></i>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card h-100"><div class="card-body d-flex justify-content-between align-items-center">
+            <div><div class="text-muted small">Total Users</div><div class="stat-value">{{ users|length }}</div></div>
+            <i class="bi bi-people stat-icon text-primary"></i>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card h-100"><div class="card-body d-flex justify-content-between align-items-center">
+            <div><div class="text-muted small">Active</div><div class="stat-value text-success">{{ active_count }}</div></div>
+            <i class="bi bi-person-check stat-icon text-success"></i>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card h-100"><div class="card-body d-flex justify-content-between align-items-center">
+            <div><div class="text-muted small">Pending</div><div class="stat-value text-danger">{{ pending_count }}</div></div>
+            <i class="bi bi-person-exclamation stat-icon text-danger"></i>
+        </div></div>
+    </div>
+</div>
+
+<!-- Chart -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <h2 class="h5 fw-semibold mb-0"><i class="bi bi-graph-up-arrow"></i> Collection Trend</h2>
+            <div class="btn-group btn-group-sm" role="group" id="granularity-group">
+                <button type="button" class="btn btn-outline-primary active" data-granularity="day">By Day</button>
+                <button type="button" class="btn btn-outline-primary" data-granularity="month">By Month</button>
+                <button type="button" class="btn btn-outline-primary" data-granularity="year">By Year</button>
+            </div>
+        </div>
+        <canvas id="trendChart" height="90"></canvas>
+    </div>
+</div>
+
+<!-- User management -->
+<div class="card">
+    <div class="card-body">
+        <h2 class="h5 fw-semibold mb-3"><i class="bi bi-gear"></i> User Management</h2>
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Name</th><th>Username</th><th>Role</th><th>Total Darood</th>
+                        <th>Status</th><th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for u in users %}
+                    <tr>
+                        <td>{{ u.full_name }}</td>
+                        <td class="text-muted">{{ u.username }}</td>
+                        <td>
+                            <form method="post" action="{% url 'update_user' u.pk %}" class="d-flex gap-1">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="set_role">
+                                <select name="role" class="form-select form-select-sm" style="width:auto"
+                                        onchange="this.form.submit()">
+                                    {% for value, label in role_choices %}
+                                    <option value="{{ value }}" {% if u.role == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                        </td>
+                        <td>{{ u.darood_total }}</td>
+                        <td>
+                            {% if u.is_active %}
+                                <span class="badge text-bg-success">Active</span>
+                            {% else %}
+                                <span class="badge text-bg-secondary">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'user_detail' u.pk %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <form method="post" action="{% url 'update_user' u.pk %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle_active">
+                                {% if u.is_active %}
+                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-circle"></i> Deactivate</button>
+                                {% else %}
+                                    <button class="btn btn-sm btn-success"><i class="bi bi-check-circle"></i> Activate</button>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">No users yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const ctx = document.getElementById('trendChart');
+    let chart;
+
+    async function load(granularity) {
+        const res = await fetch(`{% url 'chart_data_api' %}?scope=all&granularity=${granularity}`);
+        const data = await res.json();
+        const cfg = {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Darood',
+                    data: data.totals,
+                    backgroundColor: 'rgba(15, 118, 110, .75)',
+                    borderRadius: 6,
+                }],
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            },
+        };
+        if (chart) { chart.data = cfg.data; chart.update(); }
+        else { chart = new Chart(ctx, cfg); }
+    }
+
+    document.querySelectorAll('#granularity-group button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#granularity-group button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            load(btn.dataset.granularity);
+        });
+    });
+
+    load('day');
+})();
+</script>
+{% endblock %}

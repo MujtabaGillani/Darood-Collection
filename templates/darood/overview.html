@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Overview · Darood Collection{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+        <h1 class="h3 fw-bold mb-0">Collection Overview</h1>
+        <p class="text-muted mb-0">All users' darood, filtered by period.</p>
+    </div>
+    {% include 'darood/_period_nav.html' %}
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card h-100"><div class="card-body d-flex justify-content-between align-items-center">
+            <div><div class="text-muted small">Total Darood</div><div class="stat-value">{{ total }}</div></div>
+            <i class="bi bi-stars stat-icon text-warning"></i>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card h-100"><div class="card-body d-flex justify-content-between align-items-center">
+            <div><div class="text-muted small">Entries</div><div class="stat-value">{{ entry_count }}</div></div>
+            <i class="bi bi-journal-text stat-icon text-primary"></i>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card h-100"><div class="card-body d-flex justify-content-between align-items-center">
+            <div><div class="text-muted small">Contributors</div><div class="stat-value">{{ contributor_count }}</div></div>
+            <i class="bi bi-people stat-icon text-success"></i>
+        </div></div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card h-100"><div class="card-body">
+            <h2 class="h5 fw-semibold mb-3"><i class="bi bi-trophy"></i> Leaderboard</h2>
+            <ol class="list-group list-group-numbered list-group-flush">
+            {% for row in leaderboard %}
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                    <span>{{ row.user__first_name }} {{ row.user__last_name }}
+                        <small class="text-muted">@{{ row.user__username }}</small></span>
+                    <span class="badge text-bg-success rounded-pill">{{ row.total }}</span>
+                </li>
+            {% empty %}
+                <li class="list-group-item text-muted px-0">No entries in this period.</li>
+            {% endfor %}
+            </ol>
+        </div></div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card h-100"><div class="card-body">
+            <h2 class="h5 fw-semibold mb-3"><i class="bi bi-clock-history"></i> Recent Entries</h2>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>User</th><th>Date</th><th>Recorded by</th><th class="text-end">Count</th></tr></thead>
+                    <tbody>
+                    {% for e in recent %}
+                        <tr>
+                            <td>{{ e.user.full_name }}</td>
+                            <td class="text-muted">{{ e.date|date:"d M Y" }}</td>
+                            <td class="text-muted">{{ e.recorded_by.full_name|default:"—" }}</td>
+                            <td class="text-end fw-semibold">{{ e.count }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-4">No entries in this period.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div></div>
+    </div>
+</div>
+{% endblock %}

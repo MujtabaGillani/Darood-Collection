@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}{{ target_user.full_name }} · Darood Collection{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+        {% if request.user.is_superadmin %}
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+        {% endif %}
+        <li class="breadcrumb-item"><a href="{% url 'darood_overview' %}">Overview</a></li>
+        <li class="breadcrumb-item active">{{ target_user.full_name }}</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+        <h1 class="h3 fw-bold mb-0">{{ target_user.full_name }}
+            <span class="badge role-badge align-middle">{{ target_user.get_role_display }}</span></h1>
+        <p class="text-muted mb-0">@{{ target_user.username }}</p>
+    </div>
+    {% include 'darood/_period_nav.html' %}
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6">
+        <div class="card stat-card h-100"><div class="card-body d-flex justify-content-between align-items-center">
+            <div><div class="text-muted small">Darood this period</div><div class="stat-value">{{ total }}</div></div>
+            <i class="bi bi-stars stat-icon text-warning"></i>
+        </div></div>
+    </div>
+    <div class="col-6">
+        <div class="card stat-card h-100"><div class="card-body d-flex justify-content-between align-items-center">
+            <div><div class="text-muted small">Entries</div><div class="stat-value">{{ entry_count }}</div></div>
+            <i class="bi bi-journal-text stat-icon text-primary"></i>
+        </div></div>
+    </div>
+</div>
+
+<div class="card mb-4"><div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <h2 class="h5 fw-semibold mb-0"><i class="bi bi-graph-up-arrow"></i> Trend</h2>
+        <div class="btn-group btn-group-sm" id="granularity-group">
+            <button type="button" class="btn btn-outline-primary active" data-granularity="day">By Day</button>
+            <button type="button" class="btn btn-outline-primary" data-granularity="month">By Month</button>
+            <button type="button" class="btn btn-outline-primary" data-granularity="year">By Year</button>
+        </div>
+    </div>
+    <canvas id="trendChart" height="90"></canvas>
+</div></div>
+
+<div class="card"><div class="card-body">
+    <h2 class="h5 fw-semibold mb-3"><i class="bi bi-clock-history"></i> Recent Entries</h2>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>Date</th><th>Recorded by</th><th class="text-end">Count</th></tr></thead>
+            <tbody>
+            {% for e in recent %}
+                <tr>
+                    <td>{{ e.date|date:"d M Y" }}</td>
+                    <td class="text-muted">{{ e.recorded_by.full_name|default:"—" }}</td>
+                    <td class="text-end fw-semibold">{{ e.count }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="3" class="text-center text-muted py-4">No entries in this period.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const ctx = document.getElementById('trendChart');
+    const userId = {{ target_user.pk }};
+    let chart;
+    async function load(granularity) {
+        const res = await fetch(`{% url 'chart_data_api' %}?user=${userId}&granularity=${granularity}`);
+        const data = await res.json();
+        const cfg = {
+            type: 'bar',
+            data: { labels: data.labels, datasets: [{
+                label: 'Darood', data: data.totals,
+                backgroundColor: 'rgba(15,118,110,.75)', borderRadius: 6,
+            }]},
+            options: { responsive: true, plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } },
+        };
+        if (chart) { chart.data = cfg.data; chart.update(); } else { chart = new Chart(ctx, cfg); }
+    }
+    document.querySelectorAll('#granularity-group button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#granularity-group button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            load(btn.dataset.granularity);
+        });
+    });
+    load('day');
+})();
+</script>
+{% endblock %}

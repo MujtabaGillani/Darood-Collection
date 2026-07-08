@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}Add Darood · Darood Collection{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <h1 class="h4 fw-bold mb-1"><i class="bi bi-plus-circle"></i> Record Darood</h1>
+                <p class="text-muted small">Search a user, pick the date, and enter the count.</p>
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger py-2 small">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <form method="post" id="darood-form">
+                    {% csrf_token %}
+
+                    <!-- User search -->
+                    <div class="mb-3 position-relative">
+                        <label class="form-label">User</label>
+                        <input type="text" id="user-search" class="form-control"
+                               placeholder="Type a name or username…" autocomplete="off">
+                        <div class="search-results" id="search-results"></div>
+                        {{ form.user }}  {# hidden input holding the selected id #}
+                        {% for e in form.user.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+
+                        <div id="selected-user" class="selected-user-chip p-2 mt-2 d-none">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-person-check"></i> <strong id="selected-name"></strong>
+                                    <small class="text-muted" id="selected-username"></small></span>
+                                <button type="button" class="btn btn-sm btn-link text-danger p-0" id="clear-user">Change</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.date.id_for_label }}">Date</label>
+                        {{ form.date }}
+                        {% for e in form.date.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label" for="{{ form.count.id_for_label }}">Quantity</label>
+                        {{ form.count }}
+                        {% for e in form.count.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save"></i> Save Entry</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-semibold mb-3"><i class="bi bi-clock-history"></i> Your Recent Entries</h2>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead><tr><th>User</th><th>Date</th><th class="text-end">Count</th></tr></thead>
+                        <tbody>
+                        {% for e in recent %}
+                            <tr>
+                                <td>{{ e.user.full_name }}</td>
+                                <td class="text-muted">{{ e.date|date:"d M Y" }}</td>
+                                <td class="text-end fw-semibold">{{ e.count }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="3" class="text-center text-muted py-4">No entries recorded yet.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const searchInput = document.getElementById('user-search');
+    const resultsBox = document.getElementById('search-results');
+    const hidden = document.getElementById('{{ form.user.id_for_label }}');
+    const chip = document.getElementById('selected-user');
+    const selName = document.getElementById('selected-name');
+    const selUser = document.getElementById('selected-username');
+    let timer;
+
+    function hideResults() { resultsBox.style.display = 'none'; }
+
+    function selectUser(id, text, username) {
+        hidden.value = id;
+        selName.textContent = text;
+        selUser.textContent = '@' + username;
+        chip.classList.remove('d-none');
+        searchInput.classList.add('d-none');
+        hideResults();
+    }
+
+    document.getElementById('clear-user').addEventListener('click', () => {
+        hidden.value = '';
+        chip.classList.add('d-none');
+        searchInput.classList.remove('d-none');
+        searchInput.value = '';
+        searchInput.focus();
+    });
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(timer);
+        const q = searchInput.value.trim();
+        timer = setTimeout(async () => {
+            const res = await fetch(`{% url 'user_search_api' %}?q=${encodeURIComponent(q)}`);
+            const data = await res.json();
+            if (!data.results.length) {
+                resultsBox.innerHTML = '<div class="result-item text-muted">No users found</div>';
+            } else {
+                resultsBox.innerHTML = data.results.map(u =>
+                    `<div class="result-item" data-id="${u.id}" data-text="${u.text}" data-username="${u.username}">
+                        ${u.text} <small>@${u.username} · ${u.role}</small>
+                     </div>`).join('');
+            }
+            resultsBox.style.display = 'block';
+        }, 200);
+    });
+
+    resultsBox.addEventListener('click', (e) => {
+        const item = e.target.closest('.result-item[data-id]');
+        if (item) selectUser(item.dataset.id, item.dataset.text, item.dataset.username);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!resultsBox.contains(e.target) && e.target !== searchInput) hideResults();
+    });
+
+    // If the form re-rendered with a previously-selected user (validation error),
+    // keep the search box visible so the user can re-pick.
+    if (hidden.value) { searchInput.classList.remove('d-none'); }
+})();
+</script>
+{% endblock %}
