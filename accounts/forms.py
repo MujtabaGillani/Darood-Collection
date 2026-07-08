@@ -43,7 +43,15 @@ class RegisterForm(BootstrapMixin, UserCreationForm):
 
 
 class LoginForm(BootstrapMixin, AuthenticationForm):
-    """Standard username/password login with Bootstrap styling."""
+    """Username/password login with a "remember me" option."""
+
+    remember = forms.BooleanField(required=False, initial=False, label='Remember me')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Help the browser's password manager offer to save / autofill.
+        self.fields['username'].widget.attrs.update({'autocomplete': 'username', 'autofocus': True})
+        self.fields['password'].widget.attrs.update({'autocomplete': 'current-password'})
 
 
 class UserManagementForm(BootstrapMixin, forms.ModelForm):

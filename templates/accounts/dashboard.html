@@ -7,7 +7,7 @@
         <h1 class="h3 fw-bold mb-0">Super Admin Dashboard</h1>
         <p class="text-muted mb-0">Manage users and monitor daily collection.</p>
     </div>
-    <a href="{% url 'add_darood' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add Darood</a>
+    <a href="{% url 'add_darood' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> Add Darood</a>
 </div>
 
 <!-- Stat tiles -->
@@ -43,10 +43,21 @@
     <div class="card-body">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
             <h2 class="h5 fw-semibold mb-0"><i class="bi bi-graph-up-arrow"></i> Collection Trend</h2>
-            <div class="btn-group btn-group-sm" role="group" id="granularity-group">
-                <button type="button" class="btn btn-outline-primary active" data-granularity="day">By Day</button>
-                <button type="button" class="btn btn-outline-primary" data-granularity="month">By Month</button>
-                <button type="button" class="btn btn-outline-primary" data-granularity="year">By Year</button>
+            <div class="d-flex flex-wrap gap-2 align-items-center chart-toolbar">
+                <select id="user-filter" class="form-select form-select-sm" style="width:auto">
+                    <option value="">All Users</option>
+                    {% for u in users %}
+                    <option value="{{ u.pk }}">{{ u.full_name }}</option>
+                    {% endfor %}
+                </select>
+                <div class="btn-group btn-group-sm flex-wrap" role="group" id="range-group">
+                    <button type="button" class="btn btn-outline-primary" data-g="day" data-days="1">Today</button>
+                    <button type="button" class="btn btn-outline-primary" data-g="day" data-days="3">Last 3 Days</button>
+                    <button type="button" class="btn btn-outline-primary active" data-g="day" data-days="7">Last 7 Days</button>
+                    <button type="button" class="btn btn-outline-primary" data-g="week" data-days="84">By Weeks</button>
+                    <button type="button" class="btn btn-outline-primary" data-g="month" data-days="365">By Months</button>
+                    <button type="button" class="btn btn-outline-primary" data-g="year" data-days="">By Years</button>
+                </div>
             </div>
         </div>
         <canvas id="trendChart" height="90"></canvas>
@@ -71,16 +82,20 @@
                         <td>{{ u.full_name }}</td>
                         <td class="text-muted">{{ u.username }}</td>
                         <td>
-                            <form method="post" action="{% url 'update_user' u.pk %}" class="d-flex gap-1">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="set_role">
-                                <select name="role" class="form-select form-select-sm" style="width:auto"
-                                        onchange="this.form.submit()">
-                                    {% for value, label in role_choices %}
-                                    <option value="{{ value }}" {% if u.role == value %}selected{% endif %}>{{ label }}</option>
-                                    {% endfor %}
-                                </select>
-                            </form>
+                            {% if u.is_superadmin %}
+                                <span class="badge role-badge">Super Admin</span>
+                            {% else %}
+                                <form method="post" action="{% url 'update_user' u.pk %}" class="d-flex gap-1">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="set_role">
+                                    <select name="role" class="form-select form-select-sm" style="width:auto"
+                                            onchange="this.form.submit()">
+                                        {% for value, label in role_choices %}
+                                        <option value="{{ value }}" {% if u.role == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </form>
+                            {% endif %}
                         </td>
                         <td>{{ u.darood_total }}</td>
                         <td>
@@ -94,6 +109,7 @@
                             <a href="{% url 'user_detail' u.pk %}" class="btn btn-sm btn-outline-secondary">
                                 <i class="bi bi-eye"></i>
                             </a>
+                            {% if not u.is_superadmin %}
                             <form method="post" action="{% url 'update_user' u.pk %}" class="d-inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="toggle_active">
@@ -103,6 +119,7 @@
                                     <button class="btn btn-sm btn-success"><i class="bi bi-check-circle"></i> Activate</button>
                                 {% endif %}
                             </form>
+                            {% endif %}
                         </td>
                     </tr>
                 {% empty %}
@@ -119,25 +136,35 @@
 <script>
 (function () {
     const ctx = document.getElementById('trendChart');
+    const userFilter = document.getElementById('user-filter');
+    const rangeBtns = document.querySelectorAll('#range-group button');
     let chart;
+    let current = { g: 'day', days: '7' };  // default: Last 7 Days
 
-    async function load(granularity) {
-        const res = await fetch(`{% url 'chart_data_api' %}?scope=all&granularity=${granularity}`);
+    async function load() {
+        const params = new URLSearchParams();
+        const uid = userFilter.value;
+        if (uid) params.set('user', uid); else params.set('scope', 'all');
+        params.set('granularity', current.g);
+        if (current.days) params.set('days', current.days);
+
+        const res = await fetch(`{% url 'chart_data_api' %}?${params.toString()}`);
         const data = await res.json();
         const cfg = {
             type: 'bar',
             data: {
                 labels: data.labels,
                 datasets: [{
-                    label: 'Darood',
-                    data: data.totals,
-                    backgroundColor: 'rgba(15, 118, 110, .75)',
-                    borderRadius: 6,
+                    label: 'Darood', data: data.totals,
+                    backgroundColor: 'rgba(15, 118, 110, .75)', borderRadius: 6,
                 }],
             },
             options: {
                 responsive: true,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: c => `${c.parsed.y.toLocaleString()} darood` } },
+                },
                 scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
             },
         };
@@ -145,15 +172,15 @@
         else { chart = new Chart(ctx, cfg); }
     }
 
-    document.querySelectorAll('#granularity-group button').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('#granularity-group button').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            load(btn.dataset.granularity);
-        });
-    });
+    rangeBtns.forEach(btn => btn.addEventListener('click', () => {
+        rangeBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        current = { g: btn.dataset.g, days: btn.dataset.days };
+        load();
+    }));
+    userFilter.addEventListener('change', load);
 
-    load('day');
+    load();
 })();
 </script>
 {% endblock %}

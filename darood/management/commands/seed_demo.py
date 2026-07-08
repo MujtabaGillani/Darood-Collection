@@ -47,8 +47,9 @@ class Command(BaseCommand):
             created_users[username] = user
             self.stdout.write(f'  {"created" if created else "updated"}: {username} ({role})')
 
-        # Darood entries spread over the last ~40 days for the three simple users.
+        # Approved history spread over the last ~40 days for the simple users.
         manager = created_users['manager1']
+        now = timezone.now()
         today = timezone.localdate()
         DaroodEntry.objects.all().delete()
         counts = {'user1': [100, 250, 300], 'user2': [500, 120], 'user3': [80, 400, 200, 150]}
@@ -58,12 +59,26 @@ class Command(BaseCommand):
             for uname, amounts in counts.items():
                 amount = amounts[i % len(amounts)]
                 DaroodEntry.objects.create(
-                    user=created_users[uname], count=amount, date=day, recorded_by=manager
+                    user=created_users[uname], count=amount, date=day,
+                    manager=manager, recorded_by=manager,
+                    status=DaroodEntry.Status.APPROVED, reviewed_at=now,
                 )
                 entries += 1
 
+        # A few PENDING submissions from simple users addressed to manager1,
+        # so the approval queue has something to show on first run.
+        pending = 0
+        for uname, amount, offset in [('user1', 200, 0), ('user2', 350, 1), ('user3', 120, 0)]:
+            DaroodEntry.objects.create(
+                user=created_users[uname], count=amount,
+                date=today - timedelta(days=offset),
+                manager=manager, recorded_by=created_users[uname],
+                status=DaroodEntry.Status.PENDING,
+            )
+            pending += 1
+
         self.stdout.write(self.style.SUCCESS(
-            f'\nSeeded {len(DEMO_USERS)} users and {entries} darood entries.'
+            f'\nSeeded {len(DEMO_USERS)} users, {entries} approved and {pending} pending entries.'
         ))
         self.stdout.write(f'All demo passwords: "{PASSWORD}"')
         self.stdout.write('Superadmin login -> username: admin')

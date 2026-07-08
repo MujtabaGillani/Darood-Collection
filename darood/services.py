@@ -3,7 +3,7 @@
 from datetime import date, timedelta
 
 from django.db.models import Sum
-from django.db.models.functions import TruncDay, TruncMonth, TruncYear
+from django.db.models.functions import TruncDay, TruncMonth, TruncWeek, TruncYear
 
 # Supported reporting periods (label shown in the UI -> key used in querystrings).
 PERIODS = [
@@ -18,6 +18,7 @@ VALID_PERIODS = {key for key, _ in PERIODS}
 # Granularity for the time-series charts.
 GRANULARITIES = {
     'day': TruncDay,
+    'week': TruncWeek,
     'month': TruncMonth,
     'year': TruncYear,
 }
@@ -64,26 +65,78 @@ def total_count(queryset):
     return queryset.aggregate(total=Sum('count'))['total'] or 0
 
 
-def time_series(queryset, granularity='day'):
-    """Aggregate a queryset into ``[{'label': ..., 'total': ...}, ...]``.
+LABEL_FMT = {
+    'day': '%d %b',
+    'week': 'w/c %d %b',   # week commencing (Monday)
+    'month': '%b %Y',
+    'year': '%Y',
+}
 
-    Grouped and ordered chronologically by day / month / year.
-    """
+
+def _bucket_start(d, granularity):
+    """Snap a date to the start of its bucket (matches Trunc* behaviour)."""
+    if granularity == 'week':
+        return d - timedelta(days=d.weekday())      # Monday
+    if granularity == 'month':
+        return d.replace(day=1)
+    if granularity == 'year':
+        return d.replace(month=1, day=1)
+    return d
+
+
+def _next_bucket(d, granularity):
+    if granularity == 'week':
+        return d + timedelta(days=7)
+    if granularity == 'month':
+        return (d.replace(day=28) + timedelta(days=4)).replace(day=1)
+    if granularity == 'year':
+        return d.replace(year=d.year + 1, month=1, day=1)
+    return d + timedelta(days=1)
+
+
+def _totals_by_bucket(queryset, granularity):
     trunc = GRANULARITIES.get(granularity, TruncDay)
-    fmt = {
-        'day': '%Y-%m-%d',
-        'month': '%b %Y',
-        'year': '%Y',
-    }.get(granularity, '%Y-%m-%d')
-
+    totals = {}
     rows = (
         queryset.annotate(bucket=trunc('date'))
         .values('bucket')
         .annotate(total=Sum('count'))
-        .order_by('bucket')
     )
+    for row in rows:
+        bucket = row['bucket']
+        if bucket is None:
+            continue
+        if hasattr(bucket, 'date'):   # datetime -> date
+            bucket = bucket.date()
+        totals[bucket] = row['total'] or 0
+    return totals
+
+
+def time_series(queryset, granularity='day'):
+    """Sparse series: only buckets that actually have data (used for all-time)."""
+    fmt = LABEL_FMT.get(granularity, '%d %b')
+    totals = _totals_by_bucket(queryset, granularity)
     return [
-        {'label': row['bucket'].strftime(fmt), 'total': row['total'] or 0}
-        for row in rows
-        if row['bucket'] is not None
+        {'label': b.strftime(fmt), 'total': totals[b]}
+        for b in sorted(totals)
     ]
+
+
+def filled_time_series(queryset, granularity, start, end):
+    """Continuous series across [start, end]: every bucket present, 0 if empty.
+
+    This is what charts should use for a bounded window so a day with no
+    darood shows as 0 instead of the line jumping straight to the next day.
+    """
+    fmt = LABEL_FMT.get(granularity, '%d %b')
+    totals = _totals_by_bucket(queryset, granularity)
+
+    result = []
+    cur = _bucket_start(start, granularity)
+    last = _bucket_start(end, granularity)
+    guard = 0
+    while cur <= last and guard < 4000:
+        result.append({'label': cur.strftime(fmt), 'total': totals.get(cur, 0)})
+        cur = _next_bucket(cur, granularity)
+        guard += 1
+    return result

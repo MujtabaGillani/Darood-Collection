@@ -51,7 +51,25 @@ main { flex: 1 0 auto; }
     --bs-btn-hover-border-color: var(--dc-primary-dark);
     --bs-btn-active-bg: var(--dc-primary-dark);
 }
+
+/* Outline buttons (chart presets, period pills) follow the teal scheme too. */
+.btn-outline-primary {
+    --bs-btn-color: var(--dc-primary);
+    --bs-btn-border-color: var(--dc-primary);
+    --bs-btn-hover-bg: var(--dc-primary);
+    --bs-btn-hover-border-color: var(--dc-primary);
+    --bs-btn-active-bg: var(--dc-primary);
+    --bs-btn-active-border-color: var(--dc-primary);
+    --bs-btn-focus-shadow-rgb: 15, 118, 110;
+}
 a { color: var(--dc-primary); }
+a:hover { color: var(--dc-primary-dark); }
+
+/* Teal focus ring on form controls, matching the scheme. */
+.form-control:focus, .form-select:focus {
+    border-color: var(--dc-primary);
+    box-shadow: 0 0 0 .25rem rgba(15, 118, 110, .2);
+}
 
 .card { border: none; border-radius: .9rem; box-shadow: 0 4px 14px rgba(0, 0, 0, .06); }
 
@@ -78,3 +96,66 @@ a { color: var(--dc-primary); }
     border: 1px solid #99f6e4;
     border-radius: .6rem;
 }
+
+/* Never let anything push the page wider than the viewport. */
+html, body { max-width: 100%; overflow-x: hidden; }
+
+/* Segmented button groups (period pills, chart range presets) wrap cleanly:
+   when they wrap, each button becomes an independently-rounded chip instead
+   of leaving broken half-rounded corners. */
+.btn-group.flex-wrap { gap: .3rem; }
+.btn-group.flex-wrap > .btn {
+    border-radius: .4rem !important;
+}
+
+/* -------- Phones (< 576px) -------- */
+@media (max-width: 575.98px) {
+    h1.h3 { font-size: 1.35rem; }
+    h1.h4 { font-size: 1.2rem; }
+    .stat-card .stat-value { font-size: 1.5rem; }
+    .stat-card .card-body { padding: .85rem; }
+    .card-body { padding: 1rem; }
+    main.container { padding-left: .75rem; padding-right: .75rem; }
+
+    .app-navbar .navbar-brand { font-size: 1.05rem; }
+
+    /* Chart toolbars: title on its own line, controls full width below it. */
+    .chart-toolbar { width: 100%; }
+    .chart-toolbar > * { flex: 1 1 auto; }
+    #user-filter { width: 100% !important; }
+    .btn-group.flex-wrap { width: 100%; justify-content: flex-start; }
+    .btn-group.flex-wrap > .btn { flex: 1 1 auto; }
+
+    /* Smaller, wrap-friendly range/period buttons on tiny screens. */
+    .btn-group.flex-wrap > .btn { font-size: .8rem; padding: .3rem .5rem; }
+}
+
+/* -------- Small tablets (576–767px) -------- */
+@media (min-width: 576px) and (max-width: 767.98px) {
+    .stat-card .stat-value { font-size: 1.7rem; }
+}
+
+/* Floating theme toggle for pages without a navbar (login / register). */
+.theme-toggle-floating {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1080;
+    background: rgba(255, 255, 255, .15);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, .35);
+}
+.theme-toggle-floating:hover { background: rgba(255, 255, 255, .28); color: #fff; }
+
+/* -------- Dark theme adjustments for our custom components -------- */
+[data-bs-theme="dark"] .search-results {
+    background: var(--bs-body-bg);
+    border-color: var(--bs-border-color);
+}
+[data-bs-theme="dark"] .selected-user-chip {
+    background: rgba(16, 185, 129, .12);
+    border-color: rgba(16, 185, 129, .35);
+}
+[data-bs-theme="dark"] .role-badge { color: #3a2f00; }
+/* The auth gradient already reads well in dark; nudge cards to sit on it. */
+[data-bs-theme="dark"] .auth-card { background: var(--bs-tertiary-bg); }
