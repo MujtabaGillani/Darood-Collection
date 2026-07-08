@@ -27,6 +27,16 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+# Origins trusted for unsafe (POST) requests. ALLOWED_HOSTS covers the Host
+# header, but Django also checks the Origin against this list for CSRF. Needed
+# when serving through an HTTPS tunnel such as ngrok.
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.ngrok-free.app',
+    'https://*.ngrok-free.dev',
+    'https://*.ngrok.app',
+    'https://*.ngrok.io',
+]
+
 
 # Application definition
 
