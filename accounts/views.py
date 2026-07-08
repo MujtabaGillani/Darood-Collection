@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.translation import gettext as _
@@ -110,6 +110,18 @@ class DashboardView(SuperadminRequiredMixin, TemplateView):
 
         ctx = super().get_context_data(**kwargs)
         users = User.objects.all().order_by('-date_joined')
+
+        # Collection-trend filters: managers (collectors) and simple users
+        # (reciters) get their own multi-select dropdowns on the chart.
+        name_order = ('first_name', 'last_name', 'username')
+        ctx['chart_managers'] = User.objects.filter(
+            Q(role=User.Role.MANAGER)
+            | Q(role=User.Role.SUPERADMIN)
+            | Q(is_superuser=True)
+        ).distinct().order_by(*name_order)
+        ctx['chart_users'] = User.objects.filter(
+            role=User.Role.SIMPLE
+        ).order_by(*name_order)
 
         totals = dict(
             DaroodEntry.objects.filter(status=DaroodEntry.Status.APPROVED)

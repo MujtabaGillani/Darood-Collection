@@ -356,48 +356,100 @@ def _window_start(request):
     return (first or today), today
 
 
+def _id_list(request, key):
+    """Parse ``?key=1,2,3`` into a list of ints, ignoring junk."""
+    raw = request.GET.get(key, '')
+    return [int(x) for x in raw.split(',') if x.strip().isdigit()]
+
+
+def _multi_series(qs, group_field, prefix, granularity, start, end):
+    """Build a Chart.js multi-line payload: one dataset per group value.
+
+    ``group_field`` is the id column to group on (e.g. ``'manager'``) and
+    ``prefix`` the related-name prefix for its display fields
+    (e.g. ``'manager__'``). Datasets are ordered by total, descending.
+    """
+    from django.db.models import Sum
+    from .services import GRANULARITIES, LABEL_FMT, bucket_starts
+
+    trunc = GRANULARITIES[granularity]
+    rows = (
+        qs.filter(date__gte=start, date__lte=end)
+        .annotate(bucket=trunc('date'))
+        .values(group_field, prefix + 'first_name', prefix + 'last_name',
+                prefix + 'username', 'bucket')
+        .annotate(total=Sum('count'))
+    )
+
+    buckets = bucket_starts(granularity, start, end)
+    fmt = LABEL_FMT.get(granularity, '%d %b')
+
+    groups = {}
+    for row in rows:
+        gid = row[group_field]
+        if gid not in groups:
+            groups[gid] = {'label': _display_name(row, prefix), 'data': {}}
+        bucket = row['bucket']
+        if hasattr(bucket, 'date'):
+            bucket = bucket.date()
+        groups[gid]['data'][bucket] = row['total'] or 0
+
+    datasets = [
+        {'label': g['label'], 'data': [g['data'].get(b, 0) for b in buckets]}
+        for g in sorted(groups.values(), key=lambda g: sum(g['data'].values()), reverse=True)
+    ]
+    return {
+        'labels': [b.strftime(fmt) for b in buckets],
+        'datasets': datasets,
+        'start': start.isoformat(),
+        'end': end.isoformat(),
+    }
+
+
 class ManagerSeriesAPI(CanAddDaroodMixin, View):
-    """Multi-line data: one series per manager = darood they collected."""
+    """Multi-line data: one series per manager = darood they collected.
+
+    Optional ``?managers=1,2`` narrows to specific managers; omit for all.
+    """
 
     def get(self, request, *args, **kwargs):
-        from django.db.models import Sum
-        from .services import GRANULARITIES, LABEL_FMT, bucket_starts
+        from .services import GRANULARITIES
 
         granularity = request.GET.get('granularity', 'day')
         if granularity not in GRANULARITIES:
             granularity = 'day'
         start, end = _window_start(request)
 
-        trunc = GRANULARITIES[granularity]
-        rows = (
-            approved_entries()
-            .filter(manager__isnull=False, date__gte=start, date__lte=end)
-            .annotate(bucket=trunc('date'))
-            .values('manager', 'manager__first_name', 'manager__last_name',
-                    'manager__username', 'bucket')
-            .annotate(total=Sum('count'))
-        )
+        qs = approved_entries().filter(manager__isnull=False)
+        ids = _id_list(request, 'managers')
+        if ids:
+            qs = qs.filter(manager_id__in=ids)
 
-        buckets = bucket_starts(granularity, start, end)
-        fmt = LABEL_FMT.get(granularity, '%d %b')
+        payload = _multi_series(qs, 'manager', 'manager__', granularity, start, end)
+        return JsonResponse(payload)
 
-        managers = {}
-        for row in rows:
-            mid = row['manager']
-            if mid not in managers:
-                managers[mid] = {'label': _display_name(row, 'manager__'), 'data': {}}
-            bucket = row['bucket']
-            if hasattr(bucket, 'date'):
-                bucket = bucket.date()
-            managers[mid]['data'][bucket] = row['total'] or 0
 
-        datasets = [
-            {'label': m['label'], 'data': [m['data'].get(b, 0) for b in buckets]}
-            for m in sorted(managers.values(), key=lambda m: sum(m['data'].values()), reverse=True)
-        ]
-        return JsonResponse(
-            {'labels': [b.strftime(fmt) for b in buckets], 'datasets': datasets}
-        )
+class UserSeriesAPI(CanAddDaroodMixin, View):
+    """Multi-line data: one series per reciter = darood they recited.
+
+    Optional ``?users=1,2`` narrows to specific users; omit for all.
+    """
+
+    def get(self, request, *args, **kwargs):
+        from .services import GRANULARITIES
+
+        granularity = request.GET.get('granularity', 'day')
+        if granularity not in GRANULARITIES:
+            granularity = 'day'
+        start, end = _window_start(request)
+
+        qs = approved_entries()
+        ids = _id_list(request, 'users')
+        if ids:
+            qs = qs.filter(user_id__in=ids)
+
+        payload = _multi_series(qs, 'user', 'user__', granularity, start, end)
+        return JsonResponse(payload)
 
 
 class TopStatsAPI(CanAddDaroodMixin, View):

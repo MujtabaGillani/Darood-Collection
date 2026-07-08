@@ -95,9 +95,20 @@
         margin: 2rem 0 1rem;
     }
 
+    .fz-section {
+        font-family: 'Noto Nastaliq Urdu', serif;
+        direction: rtl;
+        text-align: center;
+        color: var(--dc-primary);
+        font-size: 1.9rem;
+        line-height: 1.8;
+        margin: 0 0 1.6rem;
+    }
+
     /* Lighter accents in dark mode for headings/dua. */
     [data-bs-theme="dark"] .fz-title,
-    [data-bs-theme="dark"] .fz-dua { color: #5eead4; }
+    [data-bs-theme="dark"] .fz-dua,
+    [data-bs-theme="dark"] .fz-section { color: #5eead4; }
 
     @media (max-width: 575.98px) {
         .fz-title { font-size: 1.9rem; }
@@ -115,14 +126,100 @@
         <h1 class="fz-title">درود شریف کے فضائل</h1>
         <p class="fz-sub mb-4">{% trans "Verified Hadiths on the Virtue of Sending Blessings upon the Prophet ﷺ" %}</p>
         <p class="fz-intro">
-            یہاں درود شریف کی فضیلت سے متعلق مستند احادیث درج کی گئی ہیں۔ ہر حدیث کے ساتھ اس کا اصل حوالہ
-            (کتاب اور حدیث نمبر) دیا گیا ہے تاکہ آپ خود بھی اسے جانچ سکیں۔ یہ فہرست صرف ان احادیث پر مشتمل ہے
-            جن کا حوالہ صحیح بخاری، صحیح مسلم، جامع ترمذی، سنن ابی داؤد، سنن نسائی، سنن ابن ماجہ اور
-            مسند احمد میں قابلِ تصدیق ہے۔
+            یہاں درود شریف اور نبی کریم ﷺ کی فضیلت سے متعلق قرآنی آیات اور مستند احادیث درج کی گئی ہیں۔ ہر آیت و حدیث کے ساتھ اس کا اصل حوالہ
+            (سورت و آیت یا کتاب و حدیث نمبر) دیا گیا ہے تاکہ آپ خود بھی اسے جانچ سکیں۔ یہ فہرست صرف ان روایات پر مشتمل ہے
+            جن کا حوالہ قرآنِ کریم یا صحیح بخاری، صحیح مسلم، جامع ترمذی، سنن ابی داؤد، سنن نسائی، سنن ابن ماجہ اور
+            مسند احمد جیسی معتبر کتب میں قابلِ تصدیق ہے۔
         </p>
     </header>
 
     <div class="fz-divider"><span class="line"></span><span class="star">۞</span><span class="line"></span></div>
+
+    <h2 class="fz-section">قرآنِ کریم کی روشنی میں</h2>
+
+    <div class="fz-card">
+        <span class="fz-num">1</span>
+        <p class="fz-text">
+            بے شک اللہ اور اس کے فرشتے نبی ﷺ پر درود بھیجتے ہیں۔ اے ایمان والو! تم بھی ان پر درود بھیجو اور خوب سلام بھیجا کرو۔
+        </p>
+        <span class="fz-ref">سورۃ الأحزاب، آیت 56</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">2</span>
+        <p class="fz-text">
+            اور جو اللہ اور اس کے رسول کی اطاعت کرے، وہ ان لوگوں کے ساتھ ہوگا جن پر اللہ نے انعام فرمایا، یعنی انبیاء، صدیقین، شہداء اور صالحین۔
+        </p>
+        <span class="fz-ref">سورۃ النساء، آیت 69</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">3</span>
+        <p class="fz-text">
+            کہہ دیجیے! اگر تم اللہ سے محبت کرتے ہو تو میری پیروی کرو، اللہ تم سے محبت کرے گا اور تمہارے گناہ بخش دے گا۔
+        </p>
+        <span class="fz-ref">سورۃ آل عمران، آیت 31</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">4</span>
+        <p class="fz-text">
+            یقیناً تمہارے لیے اللہ کے رسول ﷺ کی زندگی بہترین نمونہ ہے، اس شخص کے لیے جو اللہ اور آخرت کے دن کی امید رکھتا ہے اور اللہ کو کثرت سے یاد کرتا ہے۔
+        </p>
+        <span class="fz-ref">سورۃ الأحزاب، آیت 21</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">5</span>
+        <p class="fz-text">
+            اور رسول تمہیں جو کچھ دیں اسے لے لو، اور جس چیز سے منع کریں اس سے رک جاؤ، اور اللہ سے ڈرتے رہو۔
+        </p>
+        <span class="fz-ref">سورۃ الحشر، آیت 7</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">6</span>
+        <p class="fz-text">
+            جو شخص رسول کی اطاعت کرے، اس نے یقیناً اللہ کی اطاعت کی۔
+        </p>
+        <span class="fz-ref">سورۃ النساء، آیت 80</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">7</span>
+        <p class="fz-text">
+            اے نبی! ہم نے آپ کو گواہ، خوشخبری دینے والا اور ڈرانے والا بنا کر بھیجا ہے۔
+        </p>
+        <span class="fz-ref">سورۃ الأحزاب، آیت 45</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">8</span>
+        <p class="fz-text">
+            تاکہ تم اللہ اور اس کے رسول پر ایمان لاؤ، ان کی مدد کرو، ان کی تعظیم کرو اور صبح و شام اللہ کی تسبیح بیان کرو۔
+        </p>
+        <span class="fz-ref">سورۃ الفتح، آیت 9</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">9</span>
+        <p class="fz-text">
+            بے شک آپ ﷺ عظیم اخلاق کے بلند مرتبے پر فائز ہیں۔
+        </p>
+        <span class="fz-ref">سورۃ القلم، آیت 4</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">10</span>
+        <p class="fz-text">
+            اور ہم نے آپ ﷺ کا ذکر آپ کے لیے بلند کر دیا۔
+        </p>
+        <span class="fz-ref">سورۃ الشرح، آیت 4</span>
+    </div>
+
+    <div class="fz-divider"><span class="line"></span><span class="star">۞</span><span class="line"></span></div>
+
+    <h2 class="fz-section">احادیثِ مبارکہ</h2>
 
     <div class="fz-card">
         <span class="fz-num">1</span>
@@ -205,6 +302,59 @@
         <span class="fz-note eng">Note: hadith-number schemes for Musnad Ahmad vary between print editions, so no single number is given here.</span>
     </div>
 
+    <div class="fz-card">
+        <span class="fz-num">14</span>
+        <p class="fz-text">
+            رسول اللہ ﷺ نے فرمایا:
+            "جو شخص مجھ پر صبح دس مرتبہ اور شام دس مرتبہ درود بھیجے، وہ قیامت کے دن میری شفاعت کا مستحق ہوگا۔"
+        </p>
+        <span class="fz-ref">المعجم الکبیر للطبرانی، حسن لغیرہ</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">15</span>
+        <p class="fz-text">
+            رسول اللہ ﷺ نے فرمایا:
+            "تم جہاں کہیں بھی ہو، مجھ پر درود بھیجا کرو، کیونکہ تمہارا درود مجھے پہنچ جاتا ہے۔"
+        </p>
+        <span class="fz-ref">سنن ابی داؤد، حدیث نمبر 2042</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">16</span>
+        <p class="fz-text">
+            حضرت عمر بن خطاب رضی اللہ عنہ فرماتے ہیں:
+            "دعا آسمان و زمین کے درمیان معلق رہتی ہے، جب تک نبی کریم ﷺ پر درود نہ بھیجا جائے۔"
+        </p>
+        <span class="fz-ref">جامع ترمذی، حدیث نمبر 486</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">17</span>
+        <p class="fz-text">
+            رسول اللہ ﷺ نے فرمایا:
+            "جس مجلس میں لوگ اللہ کا ذکر کریں اور مجھ پر درود بھیجیں، وہ مجلس ان کے لیے باعثِ رحمت ہوتی ہے۔"
+        </p>
+        <span class="fz-ref">مسند احمد (معنی متعدد روایات سے ثابت)</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">18</span>
+        <p class="fz-text">
+            رسول اللہ ﷺ نے فرمایا:
+            "جو شخص مجھ پر کثرت سے درود بھیجتا ہے، قیامت کے دن وہ نور میں ہوگا۔"
+        </p>
+        <span class="fz-ref">روایت مختلف کتبِ فضائل میں مذکور ہے</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">19</span>
+        <p class="fz-text">
+            رسول اللہ ﷺ نے فرمایا:
+            "اللہ تعالیٰ نے میری قبر پر ایک فرشتہ مقرر فرمایا ہے جو میری امت کے ہر درود پڑھنے والے کا نام اور اس کے والد کا نام مجھے پہنچاتا ہے۔"
+        </p>
+        <span class="fz-ref">البزار (اہلِ علم نے اس کی اسانید پر کلام کیا ہے)</span>
+    </div>
     <div class="fz-divider"><span class="line"></span><span class="star">۞</span><span class="line"></span></div>
 
     <div class="fz-method mb-4">

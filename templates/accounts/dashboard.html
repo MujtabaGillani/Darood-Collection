@@ -70,14 +70,47 @@
 <div class="card mb-4">
     <div class="card-body">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-            <h2 class="h5 fw-semibold mb-0"><i class="bi bi-graph-up-arrow"></i> {% trans "Collection Trend" %}</h2>
+            <div>
+                <h2 class="h5 fw-semibold mb-0"><i class="bi bi-graph-up-arrow"></i> {% trans "Collection Trend" %}</h2>
+                <div class="text-muted small" id="chart-range"></div>
+            </div>
             <div class="d-flex flex-wrap gap-2 align-items-center chart-toolbar">
-                <select id="user-filter" class="form-select form-select-sm" style="width:auto">
-                    <option value="">{% trans "All · by manager" %}</option>
-                    {% for u in users %}
-                    <option value="{{ u.pk }}">{{ u.full_name }}</option>
-                    {% endfor %}
-                </select>
+                <!-- Managers multi-select (collectors). Empty = all managers. -->
+                <div class="dropdown ms-select" id="mgr-select">
+                    <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                        <i class="bi bi-person-badge"></i>
+                        <span class="ms-label">{% trans "Managers" %} · {% trans "All" %}</span>
+                    </button>
+                    <div class="dropdown-menu ms-menu">
+                        {% for m in chart_managers %}
+                        <label class="dropdown-item ms-item">
+                            <input type="checkbox" class="form-check-input" value="{{ m.pk }}">
+                            <span>{{ m.full_name }}</span>
+                        </label>
+                        {% empty %}
+                        <div class="dropdown-item text-muted small">{% trans "No managers" %}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <!-- Users multi-select (reciters). Empty = none shown. -->
+                <div class="dropdown ms-select" id="usr-select">
+                    <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                        <i class="bi bi-person"></i>
+                        <span class="ms-label">{% trans "Users" %} · {% trans "None" %}</span>
+                    </button>
+                    <div class="dropdown-menu ms-menu">
+                        {% for u in chart_users %}
+                        <label class="dropdown-item ms-item">
+                            <input type="checkbox" class="form-check-input" value="{{ u.pk }}">
+                            <span>{{ u.full_name }}</span>
+                        </label>
+                        {% empty %}
+                        <div class="dropdown-item text-muted small">{% trans "No users" %}</div>
+                        {% endfor %}
+                    </div>
+                </div>
                 <div class="btn-group btn-group-sm flex-wrap" role="group" id="range-group">
                     <button type="button" class="btn btn-outline-primary" data-g="day" data-days="1">{% trans "Today" %}</button>
                     <button type="button" class="btn btn-outline-primary" data-g="day" data-days="3">{% trans "Last 3 Days" %}</button>
@@ -89,6 +122,41 @@
             </div>
         </div>
         <canvas id="trendChart" height="90"></canvas>
+    </div>
+</div>
+
+<!-- Breakdown boxes: totals per manager / per user, matching the chart's
+     time range + selection, sortable highest/lowest. -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100"><div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                <div>
+                    <h2 class="h6 fw-semibold mb-0"><i class="bi bi-person-badge"></i> {% trans "Managers" %}</h2>
+                    <div class="text-muted small" id="mgr-range"></div>
+                </div>
+                <div class="btn-group btn-group-sm" role="group" data-rank="mgr">
+                    <button type="button" class="btn btn-outline-primary active" data-order="desc">{% trans "Highest" %}</button>
+                    <button type="button" class="btn btn-outline-primary" data-order="asc">{% trans "Lowest" %}</button>
+                </div>
+            </div>
+            <ul class="list-group list-group-flush rank-list" id="mgr-rank"></ul>
+        </div></div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100"><div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                <div>
+                    <h2 class="h6 fw-semibold mb-0"><i class="bi bi-person"></i> {% trans "Users" %}</h2>
+                    <div class="text-muted small" id="usr-range"></div>
+                </div>
+                <div class="btn-group btn-group-sm" role="group" data-rank="usr">
+                    <button type="button" class="btn btn-outline-primary active" data-order="desc">{% trans "Highest" %}</button>
+                    <button type="button" class="btn btn-outline-primary" data-order="asc">{% trans "Lowest" %}</button>
+                </div>
+            </div>
+            <ul class="list-group list-group-flush rank-list" id="usr-rank"></ul>
+        </div></div>
     </div>
 </div>
 
@@ -164,10 +232,14 @@
 <script>
 (function () {
     const ctx = document.getElementById('trendChart');
-    const userFilter = document.getElementById('user-filter');
+    const mgrSelect = document.getElementById('mgr-select');
+    const usrSelect = document.getElementById('usr-select');
     const rangeBtns = document.querySelectorAll('#range-group button');
     let chart;
     let current = { g: 'day', days: '7' };  // default: Last 7 Days
+    // Last-fetched series + sort order for the breakdown boxes below the chart.
+    let mgrPayload = { datasets: [] }, usrPayload = { datasets: [] };
+    let mgrOrder = 'desc', usrOrder = 'desc';
 
     function qs(extra) {
         const p = new URLSearchParams(extra || {});
@@ -176,20 +248,90 @@
         return p.toString();
     }
 
-    async function loadChart() {
-        const uid = userFilter.value;
-        let cfg;
-        if (uid) {
-            // A specific user -> single gradient line of their darood.
-            const data = await (await fetch(`{% url 'chart_data_api' %}?${qs({ user: uid })}`)).json();
-            cfg = window.trendChartConfig(data);
-        } else {
-            // All -> one coloured line per manager (how much each collected).
-            const payload = await (await fetch(`{% url 'manager_series_api' %}?${qs()}`)).json();
-            cfg = window.multiLineChartConfig(payload);
+    // Ids of the ticked checkboxes inside a multi-select dropdown.
+    function checkedIds(root) {
+        return Array.from(root.querySelectorAll('input[type="checkbox"]:checked'))
+            .map(cb => cb.value);
+    }
+
+    // Update a dropdown's button label to reflect its selection count.
+    function setLabel(root, noun, emptyText) {
+        const n = checkedIds(root).length;
+        root.querySelector('.ms-label').textContent =
+            noun + ' · ' + (n ? n : emptyText);
+    }
+
+    async function fetchJSON(url) { return (await fetch(url)).json(); }
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
+
+    // Format an ISO 'YYYY-MM-DD' as e.g. "5 Jul" (or "5 Jul 2026" with year),
+    // matching the chart axis' English month labels.
+    const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    function fmtISO(iso, withYear) {
+        if (!iso) return '';
+        const p = iso.split('-');
+        return parseInt(p[2], 10) + ' ' + MON[parseInt(p[1], 10) - 1] + (withYear ? ' ' + p[0] : '');
+    }
+    function updateRange(start, end) {
+        let text = '';
+        if (start && end) {
+            if (start === end) text = fmtISO(end, true);
+            else text = fmtISO(start, start.slice(0, 4) !== end.slice(0, 4)) + ' – ' + fmtISO(end, true);
         }
+        ['chart-range', 'mgr-range', 'usr-range'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        });
+    }
+
+    // Render a sorted totals list (highest/lowest) into a breakdown box.
+    function renderRank(el, payload, order) {
+        const rows = (payload.datasets || [])
+            .map(d => ({ label: d.label, total: (d.data || []).reduce((a, b) => a + (b || 0), 0) }))
+            .sort((a, b) => order === 'asc' ? a.total - b.total : b.total - a.total);
+        el.innerHTML = rows.length
+            ? rows.map((r, i) => `
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                    <span><span class="rank-num">${i + 1}</span> ${esc(r.label)}</span>
+                    <span class="badge rank-badge">${r.total.toLocaleString()}</span>
+                </li>`).join('')
+            : `<li class="list-group-item text-muted text-center px-0">${'{% trans "No data" %}'}</li>`;
+    }
+
+    function renderBoxes() {
+        renderRank(document.getElementById('mgr-rank'), mgrPayload, mgrOrder);
+        renderRank(document.getElementById('usr-rank'), usrPayload, usrOrder);
+    }
+
+    async function loadChart() {
+        const mgrIds = checkedIds(mgrSelect);
+        const usrIds = checkedIds(usrSelect);
+
+        // Fetch both series (empty selection = all). Managers always draw;
+        // user lines only join the chart when specific users are picked — but
+        // the Users breakdown box shows all users regardless.
+        [mgrPayload, usrPayload] = await Promise.all([
+            fetchJSON(`{% url 'manager_series_api' %}?${qs(mgrIds.length ? { managers: mgrIds.join(',') } : {})}`),
+            fetchJSON(`{% url 'user_series_api' %}?${qs(usrIds.length ? { users: usrIds.join(',') } : {})}`),
+        ]);
+
+        let labels = mgrPayload.labels;
+        const datasets = mgrPayload.datasets.slice();
+        if (usrIds.length) {
+            if (!labels || !labels.length) labels = usrPayload.labels;
+            usrPayload.datasets.forEach(d => datasets.push(d));
+        }
+
+        // A single bucket (e.g. "Today") has one point per series — nothing for
+        // a line to connect — so render grouped bars instead.
+        const single = (labels || []).length === 1;
+        const build = single ? window.multiBarChartConfig : window.multiLineChartConfig;
+        const cfg = build({ labels: labels, datasets: datasets });
         if (chart) chart.destroy();
         chart = new Chart(ctx, cfg);
+        renderBoxes();
+        updateRange(mgrPayload.start, mgrPayload.end);
     }
 
     function setCard(id, obj) {
@@ -197,7 +339,7 @@
         document.getElementById(id + '-total').textContent = obj ? obj.total.toLocaleString() : '0';
     }
     async function loadTops() {
-        const s = await (await fetch(`{% url 'top_stats_api' %}?${qs()}`)).json();
+        const s = await fetchJSON(`{% url 'top_stats_api' %}?${qs()}`);
         setCard('top-collector', s.top_manager);
         setCard('top-reciter', s.top_user);
     }
@@ -210,7 +352,26 @@
         current = { g: btn.dataset.g, days: btn.dataset.days };
         reload();
     }));
-    userFilter.addEventListener('change', reload);
+
+    mgrSelect.addEventListener('change', () => {
+        setLabel(mgrSelect, '{% trans "Managers" %}', '{% trans "All" %}');
+        loadChart();
+    });
+    usrSelect.addEventListener('change', () => {
+        setLabel(usrSelect, '{% trans "Users" %}', '{% trans "None" %}');
+        loadChart();
+    });
+
+    // Highest/Lowest sort toggles for the breakdown boxes (no refetch needed).
+    document.querySelectorAll('[data-rank]').forEach(group => {
+        group.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+            group.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (group.dataset.rank === 'mgr') mgrOrder = btn.dataset.order;
+            else usrOrder = btn.dataset.order;
+            renderBoxes();
+        }));
+    });
 
     reload();
 })();

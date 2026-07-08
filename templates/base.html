@@ -237,12 +237,48 @@ window.trendChartConfig = function (data) {
     };
 };
 
+// Shared palette + options for the multi-series line / bar configs below.
+window._multiPalette = ['#0ea5a4', '#d4af37', '#3b82f6', '#ef4444', '#22c55e',
+                        '#a855f7', '#f97316', '#06b6d4', '#e11d48', '#84cc16'];
+function _multiOptions(dark) {
+    var grid = dark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.055)';
+    return {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+            legend: { display: true, position: 'bottom',
+                      labels: { usePointStyle: true, boxWidth: 8, padding: 14,
+                                // Append each series' total to its legend label,
+                                // e.g. "admin · 24,103" — count per selection.
+                                generateLabels: function (chart) {
+                                    var items = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                                    items.forEach(function (it) {
+                                        var ds = chart.data.datasets[it.datasetIndex] || {};
+                                        var total = (ds.data || []).reduce(function (a, b) { return a + (b || 0); }, 0);
+                                        it.text = (ds.label || '') + ' · ' + total.toLocaleString();
+                                    });
+                                    return items;
+                                } } },
+            tooltip: {
+                backgroundColor: dark ? '#0f1b17' : '#ffffff',
+                titleColor: dark ? '#e7efec' : '#212529',
+                bodyColor: dark ? '#e7efec' : '#212529',
+                borderColor: dark ? 'rgba(255,255,255,.15)' : 'rgba(0,0,0,.1)',
+                borderWidth: 1, cornerRadius: 8, padding: 10,
+                callbacks: { label: function (c) { return c.dataset.label + ': ' + c.parsed.y.toLocaleString(); } },
+            },
+        },
+        scales: {
+            x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true } },
+            y: { beginAtZero: true, grid: { color: grid }, border: { display: false }, ticks: { precision: 0 } },
+        },
+    };
+}
+
 // Multi-line config: one coloured line per series (e.g. per manager).
 window.multiLineChartConfig = function (payload) {
     var dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
-    var grid = dark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.055)';
-    var palette = ['#0ea5a4', '#d4af37', '#3b82f6', '#ef4444', '#22c55e',
-                   '#a855f7', '#f97316', '#06b6d4', '#e11d48', '#84cc16'];
+    var palette = window._multiPalette;
     var datasets = (payload.datasets || []).map(function (ds, i) {
         var col = palette[i % palette.length];
         return {
@@ -256,26 +292,27 @@ window.multiLineChartConfig = function (payload) {
     return {
         type: 'line',
         data: { labels: payload.labels, datasets: datasets },
-        options: {
-            responsive: true,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-                legend: { display: true, position: 'bottom',
-                          labels: { usePointStyle: true, boxWidth: 8, padding: 14 } },
-                tooltip: {
-                    backgroundColor: dark ? '#0f1b17' : '#ffffff',
-                    titleColor: dark ? '#e7efec' : '#212529',
-                    bodyColor: dark ? '#e7efec' : '#212529',
-                    borderColor: dark ? 'rgba(255,255,255,.15)' : 'rgba(0,0,0,.1)',
-                    borderWidth: 1, cornerRadius: 8, padding: 10,
-                    callbacks: { label: function (c) { return c.dataset.label + ': ' + c.parsed.y.toLocaleString(); } },
-                },
-            },
-            scales: {
-                x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true } },
-                y: { beginAtZero: true, grid: { color: grid }, border: { display: false }, ticks: { precision: 0 } },
-            },
-        },
+        options: _multiOptions(dark),
+    };
+};
+
+// Multi-bar config: grouped bars per series — used for single-bucket ranges
+// (e.g. "Today") where a line has only one point and nothing to connect.
+window.multiBarChartConfig = function (payload) {
+    var dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    var palette = window._multiPalette;
+    var datasets = (payload.datasets || []).map(function (ds, i) {
+        var col = palette[i % palette.length];
+        return {
+            label: ds.label, data: ds.data,
+            backgroundColor: col, borderColor: col,
+            borderWidth: 0, borderRadius: 6, maxBarThickness: 72,
+        };
+    });
+    return {
+        type: 'bar',
+        data: { labels: payload.labels, datasets: datasets },
+        options: _multiOptions(dark),
     };
 };
 </script>
