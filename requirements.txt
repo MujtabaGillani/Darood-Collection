@@ -1,5 +1,7 @@
 Django>=5.1,<5.2
 djangorestframework>=3.15
+djangorestframework-simplejwt>=5.3  # JWT auth for the mobile app
+django-cors-headers>=4.4  # allow the mobile/web client to call the API
 polib>=1.2  # compile .po -> .mo without system gettext
 gunicorn>=23.0  # production WSGI server
 whitenoise>=6.7  # serve static files from the app process

@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Darood Collection",
+    "slug": "darood-collection",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "daroodcollection",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#0f766e",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.daroodcollection.app"
+    },
+    "android": {
+      "package": "com.daroodcollection.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0f766e"
+      }
+    },
+    "extra": {
+      "apiUrl": "http://127.0.0.1:8000"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-status-bar",
+      "@react-native-community/datetimepicker"
+    ]
+  }
+}

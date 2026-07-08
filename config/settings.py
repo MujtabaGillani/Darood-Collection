@@ -75,16 +75,21 @@ INSTALLED_APPS = [
 
     # Third-party
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
+    'corsheaders',
 
     # Local apps
     'accounts',
     'darood',
+    'api',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     # Serve static files directly from the app process (no separate web server).
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    # CORS must come before CommonMiddleware so preflight requests are handled.
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -208,12 +213,42 @@ LOGOUT_REDIRECT_URL = 'login'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        # JWT for the mobile app; session kept so the browsable API / web still work.
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 25,
+    # Per-endpoint throttling (applied only where a scope is set, e.g. auth).
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '10/min',
+        'register': '5/min',
+    },
 }
+
+# --- JWT (mobile auth) ------------------------------------------------------
+from datetime import timedelta  # noqa: E402
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+    'ROTATE_REFRESH_TOKENS': True,
+    # Old refresh tokens are blacklisted after rotation and on logout.
+    'BLACKLIST_AFTER_ROTATION': True,
+}
+
+# --- CORS -------------------------------------------------------------------
+# Native apps don't enforce CORS, but Expo web / browsers do. Allow all in
+# DEBUG; in production list the exact origins via DJANGO_CORS_ORIGINS.
+CORS_ALLOW_ALL_ORIGINS = DEBUG
+CORS_ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.environ.get('DJANGO_CORS_ORIGINS', '').split(',')
+    if o.strip()
+]
 
 # Show Django messages with Bootstrap-friendly CSS classes.
 from django.contrib.messages import constants as message_constants  # noqa: E402
