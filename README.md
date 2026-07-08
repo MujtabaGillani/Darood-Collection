@@ -112,9 +112,54 @@ The Django admin is also available at `/admin/` for a super admin.
 
 ---
 
+## Run with Docker
+
+The image runs Django under **Gunicorn**, serves static files with
+**WhiteNoise**, and keeps the SQLite database on a named volume so it survives
+rebuilds. Migrations run automatically on startup.
+
+```bash
+# 1. (optional) create your env file and set a real secret key
+cp .env.example .env
+python -c "import secrets; print(secrets.token_urlsafe(50))"   # paste into DJANGO_SECRET_KEY
+
+# 2. build and start
+docker compose up -d --build
+
+# 3. create a super admin (or set SEED_DEMO=true in .env to load demo data)
+docker compose exec web python manage.py createsuperuser
+```
+
+Open http://127.0.0.1:8000/  (change the host port with `HOST_PORT` in `.env`).
+
+Useful commands:
+
+```bash
+docker compose logs -f web      # tail logs
+docker compose exec web sh      # shell inside the container
+docker compose down             # stop (data is kept in the volume)
+docker compose down -v          # stop and delete the database volume
+```
+
+### Configuration (environment variables)
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `DJANGO_SECRET_KEY` | insecure dev key | **Set a real value in production.** |
+| `DJANGO_DEBUG` | `False` (image) / `True` (local) | Debug mode. |
+| `DJANGO_ALLOWED_HOSTS` | `*` | Comma-separated allowed hosts. |
+| `DJANGO_CSRF_TRUSTED_ORIGINS` | — | Comma-separated https origins for CSRF. |
+| `DJANGO_SECURE_SSL` | `False` | Enable secure cookies + HSTS + SSL redirect (behind TLS). |
+| `DJANGO_SQLITE_PATH` | `/app/data/db.sqlite3` | DB file location (kept on the volume). |
+| `HOST_PORT` | `8000` | Host port mapped to the container. |
+| `SEED_DEMO` | `false` | Load demo users + sample data on first start. |
+| `WEB_CONCURRENCY` | `3` | Gunicorn worker processes. |
+
+Behind a reverse proxy that terminates TLS, set `DJANGO_SECURE_SSL=True` and add
+your domain to `DJANGO_ALLOWED_HOSTS` and `DJANGO_CSRF_TRUSTED_ORIGINS`.
+
 ## Notes for production
 
-This project ships with development defaults. Before deploying: set
-`DEBUG=False`, move `SECRET_KEY` to an environment variable, set
-`ALLOWED_HOSTS`, switch to a production database, run `collectstatic`, and serve
-behind a WSGI server (gunicorn/uwsgi) + reverse proxy.
+The settings read all of the above from the environment, so no code changes are
+needed to deploy. To swap SQLite for Postgres/MySQL, update `DATABASES` in
+`config/settings.py` (and add the driver to `requirements.txt`).

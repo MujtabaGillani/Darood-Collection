@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,22 +21,46 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-j=91b2@y_v2e8ec&$3)s3ai*trc8=b-cvs5$82ob=2#$(k@e_p'
+# Falls back to the insecure dev key when DJANGO_SECRET_KEY is not set.
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-j=91b2@y_v2e8ec&$3)s3ai*trc8=b-cvs5$82ob=2#$(k@e_p',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes', 'on')
 
-ALLOWED_HOSTS = ["*"]
+# Comma-separated list, e.g. "darood.example.com,127.0.0.1". Defaults to "*".
+ALLOWED_HOSTS = [
+    h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',') if h.strip()
+]
 
 # Origins trusted for unsafe (POST) requests. ALLOWED_HOSTS covers the Host
 # header, but Django also checks the Origin against this list for CSRF. Needed
-# when serving through an HTTPS tunnel such as ngrok.
+# when serving through an HTTPS tunnel such as ngrok or a real domain.
 CSRF_TRUSTED_ORIGINS = [
     'https://*.ngrok-free.app',
     'https://*.ngrok-free.dev',
     'https://*.ngrok.app',
     'https://*.ngrok.io',
 ]
+CSRF_TRUSTED_ORIGINS += [
+    o.strip()
+    for o in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',')
+    if o.strip()
+]
+
+# HTTPS hardening. Enable once TLS is terminated in front of the app
+# (DJANGO_SECURE_SSL=True). Off by default so the container also works over
+# plain HTTP behind a proxy while you get things wired up.
+if os.environ.get('DJANGO_SECURE_SSL', 'False').lower() in ('1', 'true', 'yes', 'on'):
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31_536_000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 
 # Application definition
@@ -58,6 +83,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Serve static files directly from the app process (no separate web server).
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -96,7 +123,8 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        # DJANGO_SQLITE_PATH lets the DB file live on a mounted volume in Docker.
+        'NAME': os.environ.get('DJANGO_SQLITE_PATH', BASE_DIR / 'db.sqlite3'),
     }
 }
 
@@ -144,6 +172,21 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Serve static files through WhiteNoise. Use the hashed, compressed manifest
+# storage in production; in DEBUG keep the plain storage so local development
+# works without running `collectstatic` first.
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {
+        'BACKEND': (
+            'django.contrib.staticfiles.storage.StaticFilesStorage'
+            if DEBUG
+            else 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+        ),
+    },
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

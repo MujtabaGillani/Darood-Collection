@@ -1,0 +1,25 @@
+# Darood Collection — single-service deployment.
+# Values in ${...} are read from the shell or a local .env file (see .env.example).
+services:
+  web:
+    build: .
+    image: darood-collection
+    container_name: darood-collection
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-8000}:8000"
+    environment:
+      - DJANGO_DEBUG=${DJANGO_DEBUG:-False}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-change-me-please-set-a-real-secret}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-*}
+      - DJANGO_CSRF_TRUSTED_ORIGINS=${DJANGO_CSRF_TRUSTED_ORIGINS:-}
+      - DJANGO_SECURE_SSL=${DJANGO_SECURE_SSL:-False}
+      - DJANGO_SQLITE_PATH=/app/data/db.sqlite3
+      - SEED_DEMO=${SEED_DEMO:-false}
+      - WEB_CONCURRENCY=${WEB_CONCURRENCY:-3}
+    volumes:
+      # Persist the SQLite database across container rebuilds.
+      - darood-data:/app/data
+
+volumes:
+  darood-data:

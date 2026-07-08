@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Local database, logs, and collected static (rebuilt in the image)
+db.sqlite3
+*.log
+staticfiles/
+
+# Secrets
+.env
+
+# Git & CI
+.git/
+.gitignore
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
