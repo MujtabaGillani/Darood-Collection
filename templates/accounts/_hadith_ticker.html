@@ -1,0 +1,10 @@
+{% comment %}
+Seamless horizontal ticker of Darood hadiths for the auth screens.
+The item list is included twice so the CSS marquee can loop without a gap.
+{% endcomment %}
+<div class="hadith-ticker" aria-hidden="true">
+    <div class="hadith-track">
+        {% include 'accounts/_hadith_items.html' %}
+        {% include 'accounts/_hadith_items.html' %}
+    </div>
+</div>

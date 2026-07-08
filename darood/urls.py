@@ -12,6 +12,7 @@ urlpatterns = [
     path('darood/<int:pk>/review/', views.ReviewEntryView.as_view(), name='review_entry'),
 
     # Viewing
+    path('fazail/', views.FazailView.as_view(), name='fazail'),
     path('darood/overview/', views.DaroodOverviewView.as_view(), name='darood_overview'),
     path('me/', views.MyProgressView.as_view(), name='my_progress'),
     path('users/<int:pk>/darood/', views.UserDetailView.as_view(), name='user_detail'),

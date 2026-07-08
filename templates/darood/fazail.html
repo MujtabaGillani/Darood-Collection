@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% block title %}Fazail-e-Darood · Darood Collection{% endblock %}
+
+{% block head_extra %}
+<style>
+    .fz-wrap { max-width: 820px; margin: 0 auto; }
+
+    .fz-title {
+        font-family: 'Noto Nastaliq Urdu', serif;
+        direction: rtl;
+        color: var(--dc-primary);
+        font-size: 2.6rem;
+        line-height: 1.7;
+    }
+    .fz-sub { font-style: italic; color: var(--bs-secondary-color); letter-spacing: .02em; }
+    .fz-intro {
+        font-family: 'Noto Nastaliq Urdu', serif;
+        direction: rtl;
+        font-size: 1.15rem;
+        line-height: 2.3;
+        color: var(--bs-body-color);
+    }
+
+    .fz-divider { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 2rem 0; }
+    .fz-divider .line { height: 1px; width: 80px; background: var(--dc-accent); opacity: .6; }
+    .fz-divider .star { color: var(--dc-accent); font-size: 1.1rem; }
+
+    .fz-card {
+        position: relative;
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color);
+        border-radius: .8rem;
+        padding: 1.75rem 1.9rem 1.5rem;
+        margin-bottom: 1.6rem;
+        overflow: hidden;
+    }
+    .fz-card::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--dc-primary), var(--dc-accent));
+    }
+    .fz-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        background: var(--dc-primary);
+        color: var(--dc-accent);
+        font-weight: 600;
+        margin-bottom: .9rem;
+    }
+    .fz-text {
+        font-family: 'Noto Nastaliq Urdu', serif;
+        direction: rtl;
+        font-size: 1.35rem;
+        line-height: 2.5;
+        color: var(--bs-body-color);
+        margin-bottom: 1rem;
+    }
+    .fz-ref {
+        display: inline-block;
+        direction: rtl;
+        font-family: 'Noto Nastaliq Urdu', serif;
+        background: var(--dc-primary);
+        color: #fff;
+        padding: .35rem 1rem;
+        border-radius: 100px;
+        font-size: .95rem;
+    }
+    .fz-note { display: block; margin-top: .6rem; font-size: .85rem; color: var(--bs-secondary-color); }
+
+    .fz-method {
+        direction: rtl;
+        font-family: 'Noto Nastaliq Urdu', serif;
+        background: var(--bs-tertiary-bg);
+        border: 1px solid var(--bs-border-color);
+        border-radius: .8rem;
+        padding: 1.6rem 1.8rem;
+        font-size: 1.1rem;
+        line-height: 2.2;
+    }
+    .fz-method .eng { display: block; direction: ltr; font-size: .85rem; color: var(--bs-secondary-color); margin-top: .8rem; }
+
+    .fz-dua {
+        font-family: 'Noto Nastaliq Urdu', serif;
+        direction: rtl;
+        text-align: center;
+        color: var(--dc-primary);
+        font-size: 1.7rem;
+        line-height: 2.2;
+        margin: 2rem 0 1rem;
+    }
+
+    /* Lighter accents in dark mode for headings/dua. */
+    [data-bs-theme="dark"] .fz-title,
+    [data-bs-theme="dark"] .fz-dua { color: #5eead4; }
+
+    @media (max-width: 575.98px) {
+        .fz-title { font-size: 1.9rem; }
+        .fz-text { font-size: 1.15rem; line-height: 2.3; }
+        .fz-card { padding: 1.3rem 1.3rem 1.1rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fz-wrap">
+
+    <header class="text-center">
+        <div class="fz-divider"><span class="line"></span><span class="star">۞</span><span class="line"></span></div>
+        <h1 class="fz-title">درود شریف کے فضائل</h1>
+        <p class="fz-sub mb-4">Verified Hadiths on the Virtue of Sending Blessings upon the Prophet ﷺ</p>
+        <p class="fz-intro">
+            یہاں درود شریف کی فضیلت سے متعلق مستند احادیث درج کی گئی ہیں۔ ہر حدیث کے ساتھ اس کا اصل حوالہ
+            (کتاب اور حدیث نمبر) دیا گیا ہے تاکہ آپ خود بھی اسے جانچ سکیں۔ یہ فہرست صرف ان احادیث پر مشتمل ہے
+            جن کا حوالہ صحیح بخاری، صحیح مسلم، جامع ترمذی، سنن ابی داؤد، سنن نسائی، سنن ابن ماجہ اور
+            مسند احمد میں قابلِ تصدیق ہے۔
+        </p>
+    </header>
+
+    <div class="fz-divider"><span class="line"></span><span class="star">۞</span><span class="line"></span></div>
+
+    <div class="fz-card">
+        <span class="fz-num">1</span>
+        <p class="fz-text">حضرت کعب بن عُجرہ رضی اللہ عنہ سے روایت ہے کہ ہم نے عرض کیا: یا رسول اللہ! ہم آپ پر سلام بھیجنا تو جانتے ہیں، مگر درود کیسے بھیجیں؟ آپ ﷺ نے فرمایا: یوں کہو: اے اللہ! محمد اور آلِ محمد پر اپنی رحمت نازل فرما، جیسے تو نے ابراہیم اور آلِ ابراہیم پر رحمت نازل فرمائی، بے شک تو تعریف کے لائق اور بزرگی والا ہے۔ اے اللہ! محمد اور آلِ محمد پر برکت نازل فرما، جیسے تو نے ابراہیم اور آلِ ابراہیم پر برکت نازل فرمائی، بے شک تو تعریف کے لائق اور بزرگی والا ہے۔</p>
+        <span class="fz-ref">صحیح بخاری، حدیث نمبر 6357</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">2</span>
+        <p class="fz-text">رسول اللہ ﷺ نے فرمایا: جو شخص مجھ پر ایک بار درود بھیجے، اللہ تعالیٰ اس پر دس رحمتیں نازل فرماتا ہے۔</p>
+        <span class="fz-ref">صحیح مسلم، حدیث نمبر 384</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">3</span>
+        <p class="fz-text">حضرت انس بن مالک رضی اللہ عنہ سے روایت ہے کہ رسول اللہ ﷺ نے فرمایا: جو شخص مجھ پر ایک بار درود بھیجے، اللہ تعالیٰ اس پر دس رحمتیں نازل فرماتا ہے، اس کے دس گناہ معاف کر دیتا ہے اور اس کے دس درجات بلند فرما دیتا ہے۔</p>
+        <span class="fz-ref">سنن نسائی، حدیث نمبر 1297</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">4</span>
+        <p class="fz-text">رسول اللہ ﷺ نے فرمایا: اللہ تعالیٰ کے کچھ فرشتے زمین میں سیر کرتے پھرتے ہیں اور میری امت کا سلام مجھ تک پہنچاتے ہیں۔</p>
+        <span class="fz-ref">سنن نسائی، حدیث نمبر 1282</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">5</span>
+        <p class="fz-text">حضرت عبداللہ بن مسعود رضی اللہ عنہ سے روایت ہے کہ رسول اللہ ﷺ نے فرمایا: قیامت کے دن لوگوں میں سب سے زیادہ میرے قریب وہ شخص ہوگا جس نے مجھ پر سب سے زیادہ درود بھیجا ہو۔</p>
+        <span class="fz-ref">جامع ترمذی، حدیث نمبر 484</span>
+        <span class="fz-note eng">Grade: Hasan Gharib (imam at-Tirmidhi)</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">6</span>
+        <p class="fz-text">رسول اللہ ﷺ نے فرمایا: اصل بخیل وہ ہے جس کے سامنے میرا ذکر کیا جائے اور وہ مجھ پر درود نہ بھیجے۔</p>
+        <span class="fz-ref">جامع ترمذی، حدیث نمبر 3546</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">7</span>
+        <p class="fz-text">حضرت عبداللہ بن عمرو رضی اللہ عنہما سے روایت ہے کہ رسول اللہ ﷺ نے فرمایا: جب تم مؤذن کی اذان سنو تو ویسے ہی کہو جیسے وہ کہتا ہے، پھر مجھ پر درود بھیجو، کیونکہ جو شخص مجھ پر ایک بار درود بھیجتا ہے، اللہ تعالیٰ اس کی وجہ سے اس پر دس رحمتیں نازل فرماتا ہے۔ پھر اللہ تعالیٰ سے میرے لیے وسیلہ مانگو، کیونکہ یہ جنت میں ایک ایسا مقام ہے جو اللہ کے بندوں میں سے صرف ایک ہی بندے کے لیے سزاوار ہے، اور مجھے امید ہے کہ وہ بندہ میں ہی ہوں۔ جو شخص میرے لیے وسیلہ مانگے گا، اس کے لیے میری شفاعت واجب ہو جائے گی۔</p>
+        <span class="fz-ref">جامع ترمذی، حدیث نمبر 3614</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">8</span>
+        <p class="fz-text">حضرت فضالہ بن عُبید رضی اللہ عنہ سے روایت ہے کہ رسول اللہ ﷺ نے ایک شخص کو نماز میں دعا کرتے سنا جس نے نہ اللہ کی حمد بیان کی اور نہ نبی ﷺ پر درود بھیجا۔ آپ ﷺ نے فرمایا: اس نے جلدی کی۔ پھر آپ ﷺ نے اسے بلا کر فرمایا: جب تم میں سے کوئی دعا کرے تو پہلے اپنے رب کی حمد و ثنا بیان کرے، پھر نبی ﷺ پر درود بھیجے، اس کے بعد جو چاہے مانگے۔</p>
+        <span class="fz-ref">جامع ترمذی، حدیث نمبر 3476</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">9</span>
+        <p class="fz-text">حضرت اوس بن اوس رضی اللہ عنہ سے روایت ہے کہ رسول اللہ ﷺ نے فرمایا: تمہارے دنوں میں سب سے افضل دن جمعہ کا دن ہے۔ اسی دن آدم علیہ السلام کو پیدا کیا گیا، اسی دن ان کی وفات ہوئی، اسی دن صور پھونکا جائے گا اور اسی دن بے ہوشی طاری ہوگی۔ لہٰذا اس دن مجھ پر کثرت سے درود بھیجا کرو، کیونکہ تمہارا درود مجھ پر پیش کیا جاتا ہے۔ صحابہ نے عرض کیا: یا رسول اللہ! ہمارا درود آپ پر کیسے پیش ہوگا جبکہ آپ کا جسدِ اطہر مٹی میں مل چکا ہوگا؟ آپ ﷺ نے فرمایا: اللہ تعالیٰ نے زمین پر انبیاء کے جسموں کو کھانا حرام کر دیا ہے۔</p>
+        <span class="fz-ref">سنن ابی داؤد، حدیث نمبر 1047</span>
+        <span class="fz-note eng">Grade: Sahih (al-Albani)</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">10</span>
+        <p class="fz-text">رسول اللہ ﷺ نے فرمایا: جو شخص بھی مجھے سلام بھیجتا ہے، اللہ تعالیٰ میری روح مجھے لوٹا دیتا ہے یہاں تک کہ میں اس کے سلام کا جواب دیتا ہوں۔</p>
+        <span class="fz-ref">سنن ابی داؤد، حدیث نمبر 2041</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">11</span>
+        <p class="fz-text">حضرت عبداللہ بن عامر بن ربیعہ اپنے والد سے روایت کرتے ہیں کہ رسول اللہ ﷺ نے فرمایا: جو مسلمان بھی مجھ پر درود بھیجتا ہے، فرشتے اس پر اس وقت تک درود بھیجتے رہتے ہیں جب تک وہ مجھ پر درود بھیجتا رہے، پس بندہ چاہے تو اسے کم کرے یا زیادہ۔</p>
+        <span class="fz-ref">سنن ابن ماجہ، حدیث نمبر 907</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">12</span>
+        <p class="fz-text">رسول اللہ ﷺ نے فرمایا: جو شخص مجھ پر درود بھیجنا بھول جائے، اس نے جنت کا راستہ گم کر دیا۔</p>
+        <span class="fz-ref">سنن ابن ماجہ، حدیث نمبر 908</span>
+    </div>
+
+    <div class="fz-card">
+        <span class="fz-num">13</span>
+        <p class="fz-text">حضرت ابو طلحہ انصاری رضی اللہ عنہ سے روایت ہے کہ ایک صبح رسول اللہ ﷺ خوشی سے تر و تازہ نظر آئے۔ صحابہ نے عرض کیا: یا رسول اللہ! آج آپ بہت خوش نظر آ رہے ہیں۔ آپ ﷺ نے فرمایا: ہاں، میرے رب کی طرف سے ایک فرشتہ آیا اور کہا: جو شخص آپ کی امت میں سے آپ پر ایک بار درود بھیجے گا، اللہ تعالیٰ اس کے بدلے اس کے لیے دس نیکیاں لکھے گا، اس کے دس گناہ مٹا دے گا، اس کے دس درجات بلند کر دے گا، اور اسی طرح کا جواب اسے بھی دے گا۔</p>
+        <span class="fz-ref">مسند احمد</span>
+        <span class="fz-note eng">Note: hadith-number schemes for Musnad Ahmad vary between print editions, so no single number is given here.</span>
+    </div>
+
+    <div class="fz-divider"><span class="line"></span><span class="star">۞</span><span class="line"></span></div>
+
+    <div class="fz-method mb-4">
+        یہ فہرست جان بوجھ کر مختصر رکھی گئی ہے۔ انٹرنیٹ پر درود شریف کی فضیلت سے متعلق چالیس یا اس سے زیادہ روایات پر مشتمل فہرستیں عام ملتی ہیں، مگر ان میں سے بیشتر کا کوئی قابلِ تصدیق حوالہ موجود نہیں ہوتا۔ یہاں صرف وہی احادیث شامل کی گئی ہیں جنہیں کسی معتبر کتاب میں براہِ راست تلاش کیا جا سکتا ہے۔
+        <span class="eng">This list is deliberately short. Many "40+ virtues" lists online lack a verifiable book, chapter, and hadith number. Only hadiths traceable to a specific reference in a major collection are included here.</span>
+    </div>
+
+    <p class="fz-dua">اللّٰهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ وَّعَلَىٰ آلِ مُحَمَّدٍ</p>
+
+</div>
+{% endblock %}

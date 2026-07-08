@@ -224,6 +224,12 @@ class MyProgressView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
+class FazailView(LoginRequiredMixin, TemplateView):
+    """Static devotional page: verified hadiths on the virtue of Darood."""
+
+    template_name = 'darood/fazail.html'
+
+
 class UserDetailView(CanAddDaroodMixin, TemplateView):
     """Per-user approved darood breakdown for managers / superadmins."""
 
