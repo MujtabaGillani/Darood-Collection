@@ -33,10 +33,11 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="nav">
+            {% with url_name=request.resolver_match.url_name %}
             <ul class="navbar-nav me-auto">
                 {% if user.can_add_darood %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'approvals' %}">
+                    <a class="nav-link {% if url_name == 'approvals' %}active{% endif %}" href="{% url 'approvals' %}">
                         <i class="bi bi-check2-square"></i> Approvals
                         {% if pending_approvals_count %}
                         <span class="badge text-bg-danger rounded-pill">{{ pending_approvals_count }}</span>
@@ -44,33 +45,35 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'darood_overview' %}"><i class="bi bi-people"></i> Overview</a>
+                    <a class="nav-link {% if url_name == 'darood_overview' or url_name == 'add_darood' %}active{% endif %}" href="{% url 'darood_overview' %}"><i class="bi bi-people"></i> Overview</a>
                 </li>
                 {% else %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'my_progress' %}"><i class="bi bi-graph-up"></i> My Progress</a>
+                    <a class="nav-link {% if url_name == 'my_progress' or url_name == 'submit_darood' %}active{% endif %}" href="{% url 'my_progress' %}"><i class="bi bi-graph-up"></i> My Progress</a>
                 </li>
                 {% endif %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'fazail' %}"><i class="bi bi-book"></i> Fazail-e-Darood</a>
+                    <a class="nav-link {% if url_name == 'fazail' %}active{% endif %}" href="{% url 'fazail' %}"><i class="bi bi-book-half"></i> Fazail-e-Darood</a>
                 </li>
                 {% if user.is_superadmin %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                    <a class="nav-link {% if url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
                 </li>
                 {% endif %}
             </ul>
-            <div class="d-flex flex-wrap align-items-center gap-2 gap-lg-3 mt-2 mt-lg-0">
-                <button type="button" class="btn btn-sm btn-outline-light theme-toggle" aria-label="Toggle theme" title="Toggle light/dark">
-                    <i class="bi bi-moon-stars"></i>
-                </button>
-                <span class="text-white-50 small">
-                    <i class="bi bi-person-circle"></i> {{ user.full_name }}
+            {% endwith %}
+            <div class="d-flex flex-wrap align-items-center gap-2 mt-3 mt-lg-0">
+                <span class="navbar-user">
+                    <i class="bi bi-person-circle"></i>
+                    <span class="navbar-user-name">{{ user.full_name }}</span>
                     <span class="badge role-badge">{{ user.get_role_display }}</span>
                 </span>
+                <button type="button" class="btn btn-sm nav-icon-btn theme-toggle" aria-label="Toggle theme" title="Toggle light/dark">
+                    <i class="bi bi-moon-stars"></i>
+                </button>
                 <form method="post" action="{% url 'logout' %}" class="m-0">
                     {% csrf_token %}
-                    <button class="btn btn-sm btn-outline-light" type="submit">
+                    <button class="btn btn-sm nav-logout-btn" type="submit" title="Logout">
                         <i class="bi bi-box-arrow-right"></i> Logout
                     </button>
                 </form>
@@ -149,7 +152,110 @@ if (window.Chart) {
     var _dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
     Chart.defaults.color = _dark ? '#adb5bd' : '#495057';
     Chart.defaults.borderColor = _dark ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.08)';
+    Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
 }
+
+// Shared "pretty" trend-chart config: smooth gradient area line, hover points,
+// clean grid and styled tooltip. Theme-aware (brighter teal in dark mode).
+window.trendChartConfig = function (data) {
+    var dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    var line = dark ? '#2dd4bf' : '#0f766e';           // teal
+    var grid = dark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.055)';
+    var gTop = dark ? 'rgba(45,212,191,.38)' : 'rgba(15,118,110,.34)';
+    var gBot = dark ? 'rgba(45,212,191,.02)' : 'rgba(15,118,110,.01)';
+    return {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'Darood',
+                data: data.totals,
+                fill: true,
+                borderColor: line,
+                borderWidth: 3,
+                tension: 0.4,
+                pointRadius: 3,
+                pointHoverRadius: 6,
+                pointBackgroundColor: line,
+                pointBorderColor: dark ? '#0c1613' : '#fff',
+                pointBorderWidth: 2,
+                backgroundColor: function (c) {
+                    var chart = c.chart, area = chart.chartArea;
+                    if (!area) return gTop;
+                    var g = chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+                    g.addColorStop(0, gTop);
+                    g.addColorStop(1, gBot);
+                    return g;
+                },
+            }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: dark ? '#0f1b17' : '#ffffff',
+                    titleColor: dark ? '#e7efec' : '#212529',
+                    bodyColor: dark ? '#e7efec' : '#212529',
+                    borderColor: line,
+                    borderWidth: 1,
+                    padding: 10,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    callbacks: { label: function (c) { return c.parsed.y.toLocaleString() + ' darood'; } },
+                },
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true } },
+                y: { beginAtZero: true, grid: { color: grid }, border: { display: false }, ticks: { precision: 0 } },
+            },
+        },
+    };
+};
+
+// Multi-line config: one coloured line per series (e.g. per manager).
+window.multiLineChartConfig = function (payload) {
+    var dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    var grid = dark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.055)';
+    var palette = ['#0ea5a4', '#d4af37', '#3b82f6', '#ef4444', '#22c55e',
+                   '#a855f7', '#f97316', '#06b6d4', '#e11d48', '#84cc16'];
+    var datasets = (payload.datasets || []).map(function (ds, i) {
+        var col = palette[i % palette.length];
+        return {
+            label: ds.label, data: ds.data,
+            borderColor: col, backgroundColor: col,
+            borderWidth: 2.5, tension: 0.4,
+            pointRadius: 2, pointHoverRadius: 5,
+            pointBackgroundColor: col, fill: false,
+        };
+    });
+    return {
+        type: 'line',
+        data: { labels: payload.labels, datasets: datasets },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: true, position: 'bottom',
+                          labels: { usePointStyle: true, boxWidth: 8, padding: 14 } },
+                tooltip: {
+                    backgroundColor: dark ? '#0f1b17' : '#ffffff',
+                    titleColor: dark ? '#e7efec' : '#212529',
+                    bodyColor: dark ? '#e7efec' : '#212529',
+                    borderColor: dark ? 'rgba(255,255,255,.15)' : 'rgba(0,0,0,.1)',
+                    borderWidth: 1, cornerRadius: 8, padding: 10,
+                    callbacks: { label: function (c) { return c.dataset.label + ': ' + c.parsed.y.toLocaleString(); } },
+                },
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true } },
+                y: { beginAtZero: true, grid: { color: grid }, border: { display: false }, ticks: { precision: 0 } },
+            },
+        },
+    };
+};
 </script>
 {% block extra_js %}{% endblock %}
 </body>

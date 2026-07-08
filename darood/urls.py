@@ -20,4 +20,6 @@ urlpatterns = [
     # JSON APIs
     path('api/users/search/', views.UserSearchAPI.as_view(), name='user_search_api'),
     path('api/chart/', views.ChartDataAPI.as_view(), name='chart_data_api'),
+    path('api/chart/managers/', views.ManagerSeriesAPI.as_view(), name='manager_series_api'),
+    path('api/stats/tops/', views.TopStatsAPI.as_view(), name='top_stats_api'),
 ]

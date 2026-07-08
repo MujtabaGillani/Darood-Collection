@@ -8,9 +8,66 @@ body { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: col
 main { flex: 1 0 auto; }
 
 .app-navbar {
-    background: linear-gradient(90deg, var(--dc-primary-dark), var(--dc-primary));
-    box-shadow: 0 2px 10px rgba(0, 0, 0, .12);
+    background: linear-gradient(90deg, #0a3b2c 0%, var(--dc-primary) 55%, #14867a 100%);
+    box-shadow: 0 3px 16px rgba(0, 0, 0, .22);
+    border-bottom: 2px solid rgba(212, 175, 55, .55);
+    padding-top: .55rem;
+    padding-bottom: .55rem;
 }
+.app-navbar .navbar-brand {
+    color: #fff;
+    letter-spacing: .3px;
+}
+.app-navbar .navbar-brand i { color: var(--dc-accent); }
+
+.app-navbar .nav-link {
+    color: rgba(255, 255, 255, .82);
+    font-weight: 500;
+    border-radius: .55rem;
+    padding: .4rem .8rem;
+    margin: 0 .1rem;
+    transition: background-color .16s ease, color .16s ease, box-shadow .16s ease;
+}
+.app-navbar .nav-link i { color: var(--dc-accent); opacity: .85; }
+.app-navbar .nav-link:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, .12);
+}
+.app-navbar .nav-link:hover i { opacity: 1; }
+.app-navbar .nav-link.active {
+    color: #fff;
+    background: rgba(255, 255, 255, .16);
+    box-shadow: inset 0 -2px 0 0 var(--dc-accent);
+}
+
+/* User chip */
+.navbar-user {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    background: rgba(255, 255, 255, .12);
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 100px;
+    padding: .22rem .35rem .22rem .7rem;
+    color: #fff;
+    font-size: .85rem;
+    line-height: 1;
+}
+.navbar-user > .bi-person-circle { font-size: 1.05rem; opacity: .9; }
+
+/* Navbar buttons */
+.nav-icon-btn,
+.nav-logout-btn {
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, .35);
+    background: transparent;
+    transition: background-color .16s ease, border-color .16s ease;
+}
+.nav-icon-btn { border-radius: 50%; width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+.nav-icon-btn:hover,
+.nav-logout-btn:hover { color: #fff; background: rgba(255, 255, 255, .18); border-color: rgba(255, 255, 255, .55); }
+.nav-logout-btn { border-radius: .55rem; }
+
 .role-badge {
     background: var(--dc-accent);
     color: #3a2f00;
@@ -267,3 +324,55 @@ html, body { max-width: 100%; overflow-x: hidden; }
 [data-bs-theme="dark"] .role-badge { color: #3a2f00; }
 /* The auth gradient already reads well in dark; nudge cards to sit on it. */
 [data-bs-theme="dark"] .auth-card { background: var(--bs-tertiary-bg); }
+
+/* -------------------------------------------------------------------------
+   Richer dark theme — replace Bootstrap's flat grey with a teal-tinted,
+   layered palette so cards stand out from the background.
+   ------------------------------------------------------------------------- */
+[data-bs-theme="dark"] {
+    --bs-body-bg: #0c1613;
+    --bs-body-color: #e7efec;
+    --bs-secondary-color: #9fb3ad;
+    --bs-border-color: rgba(255, 255, 255, .09);
+    --bs-tertiary-bg: #16241f;
+}
+[data-bs-theme="dark"] body {
+    background:
+        radial-gradient(1100px 520px at 50% -12%, #133029 0%, rgba(19, 48, 41, 0) 60%),
+        #0c1613;
+    background-attachment: fixed;
+}
+[data-bs-theme="dark"] .card,
+[data-bs-theme="dark"] .stat-card {
+    background: linear-gradient(150deg, #17261f, #101b17);
+    border: 1px solid rgba(212, 175, 55, .12);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .40);
+}
+[data-bs-theme="dark"] .stat-card { border-color: rgba(255, 255, 255, .06); }
+[data-bs-theme="dark"] .stat-card:hover { border-color: rgba(212, 175, 55, .30); }
+
+/* Tables: subtle teal hover + softer separators. */
+[data-bs-theme="dark"] .table {
+    --bs-table-color: #e7efec;
+    --bs-table-border-color: rgba(255, 255, 255, .07);
+    --bs-table-hover-color: #fff;
+    --bs-table-hover-bg: rgba(15, 118, 110, .16);
+}
+[data-bs-theme="dark"] .table > thead th { color: #cfe0da; }
+
+/* Form controls sit a touch lighter than the card for definition. */
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select {
+    background-color: #0f1b17;
+    border-color: rgba(255, 255, 255, .14);
+    color: #e7efec;
+}
+[data-bs-theme="dark"] .form-control::placeholder { color: #7f938d; }
+
+/* Section headings get a soft gold tint in dark. */
+[data-bs-theme="dark"] .card h2 i,
+[data-bs-theme="dark"] .stat-card .stat-icon { filter: saturate(1.1); }
+[data-bs-theme="dark"] .stat-value { color: #f3f7f5; }
+
+/* Muted "list-group" rows on dark cards. */
+[data-bs-theme="dark"] .list-group-item { background: transparent; color: var(--bs-body-color); }

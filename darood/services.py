@@ -122,6 +122,19 @@ def time_series(queryset, granularity='day'):
     ]
 
 
+def bucket_starts(granularity, start, end):
+    """List of bucket start-dates spanning [start, end] at the granularity."""
+    out = []
+    cur = _bucket_start(start, granularity)
+    last = _bucket_start(end, granularity)
+    guard = 0
+    while cur <= last and guard < 4000:
+        out.append(cur)
+        cur = _next_bucket(cur, granularity)
+        guard += 1
+    return out
+
+
 def filled_time_series(queryset, granularity, start, end):
     """Continuous series across [start, end]: every bucket present, 0 if empty.
 

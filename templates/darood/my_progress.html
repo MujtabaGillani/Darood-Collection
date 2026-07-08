@@ -92,18 +92,7 @@
         if (current.days) params.set('days', current.days);
         const res = await fetch(`{% url 'chart_data_api' %}?${params.toString()}`);
         const data = await res.json();
-        const cfg = {
-            type: 'line',
-            data: { labels: data.labels, datasets: [{
-                label: 'Darood', data: data.totals, fill: true,
-                borderColor: 'rgba(15,118,110,1)', backgroundColor: 'rgba(15,118,110,.15)',
-                tension: .3, pointRadius: 3,
-            }]},
-            options: { responsive: true,
-                plugins: { legend: { display: false },
-                    tooltip: { callbacks: { label: c => `${c.parsed.y.toLocaleString()} darood` } } },
-                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } },
-        };
+        const cfg = window.trendChartConfig(data);
         if (chart) { chart.data = cfg.data; chart.update(); } else { chart = new Chart(ctx, cfg); }
     }
     rangeBtns.forEach(btn => btn.addEventListener('click', () => {

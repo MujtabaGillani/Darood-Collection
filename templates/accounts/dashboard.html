@@ -7,7 +7,10 @@
         <h1 class="h3 fw-bold mb-0">Super Admin Dashboard</h1>
         <p class="text-muted mb-0">Manage users and monitor daily collection.</p>
     </div>
-    <a href="{% url 'add_darood' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> Add Darood</a>
+    <div class="d-flex gap-2">
+        <a href="{% url 'add_user' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-person-plus"></i> Add User</a>
+        <a href="{% url 'add_darood' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> Add Darood</a>
+    </div>
 </div>
 
 <!-- Stat tiles -->
@@ -38,6 +41,30 @@
     </div>
 </div>
 
+<!-- Top performers (respect the chart's time filter) -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card stat-card h-100"><div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+                <div class="text-muted small"><i class="bi bi-trophy"></i> Top Collector (Manager)</div>
+                <div class="fw-bold" style="font-size:1.35rem" id="top-collector-name">—</div>
+                <div class="text-muted small"><span id="top-collector-total">0</span> darood collected</div>
+            </div>
+            <i class="bi bi-award stat-icon text-warning"></i>
+        </div></div>
+    </div>
+    <div class="col-md-6">
+        <div class="card stat-card h-100"><div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+                <div class="text-muted small"><i class="bi bi-star-fill"></i> Top Reciter (User)</div>
+                <div class="fw-bold" style="font-size:1.35rem" id="top-reciter-name">—</div>
+                <div class="text-muted small"><span id="top-reciter-total">0</span> darood</div>
+            </div>
+            <i class="bi bi-stars stat-icon text-warning"></i>
+        </div></div>
+    </div>
+</div>
+
 <!-- Chart -->
 <div class="card mb-4">
     <div class="card-body">
@@ -45,7 +72,7 @@
             <h2 class="h5 fw-semibold mb-0"><i class="bi bi-graph-up-arrow"></i> Collection Trend</h2>
             <div class="d-flex flex-wrap gap-2 align-items-center chart-toolbar">
                 <select id="user-filter" class="form-select form-select-sm" style="width:auto">
-                    <option value="">All Users</option>
+                    <option value="">All · by manager</option>
                     {% for u in users %}
                     <option value="{{ u.pk }}">{{ u.full_name }}</option>
                     {% endfor %}
@@ -141,46 +168,50 @@
     let chart;
     let current = { g: 'day', days: '7' };  // default: Last 7 Days
 
-    async function load() {
-        const params = new URLSearchParams();
-        const uid = userFilter.value;
-        if (uid) params.set('user', uid); else params.set('scope', 'all');
-        params.set('granularity', current.g);
-        if (current.days) params.set('days', current.days);
-
-        const res = await fetch(`{% url 'chart_data_api' %}?${params.toString()}`);
-        const data = await res.json();
-        const cfg = {
-            type: 'bar',
-            data: {
-                labels: data.labels,
-                datasets: [{
-                    label: 'Darood', data: data.totals,
-                    backgroundColor: 'rgba(15, 118, 110, .75)', borderRadius: 6,
-                }],
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { callbacks: { label: c => `${c.parsed.y.toLocaleString()} darood` } },
-                },
-                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
-            },
-        };
-        if (chart) { chart.data = cfg.data; chart.update(); }
-        else { chart = new Chart(ctx, cfg); }
+    function qs(extra) {
+        const p = new URLSearchParams(extra || {});
+        p.set('granularity', current.g);
+        if (current.days) p.set('days', current.days);
+        return p.toString();
     }
+
+    async function loadChart() {
+        const uid = userFilter.value;
+        let cfg;
+        if (uid) {
+            // A specific user -> single gradient line of their darood.
+            const data = await (await fetch(`{% url 'chart_data_api' %}?${qs({ user: uid })}`)).json();
+            cfg = window.trendChartConfig(data);
+        } else {
+            // All -> one coloured line per manager (how much each collected).
+            const payload = await (await fetch(`{% url 'manager_series_api' %}?${qs()}`)).json();
+            cfg = window.multiLineChartConfig(payload);
+        }
+        if (chart) chart.destroy();
+        chart = new Chart(ctx, cfg);
+    }
+
+    function setCard(id, obj) {
+        document.getElementById(id + '-name').textContent = obj ? obj.name : '—';
+        document.getElementById(id + '-total').textContent = obj ? obj.total.toLocaleString() : '0';
+    }
+    async function loadTops() {
+        const s = await (await fetch(`{% url 'top_stats_api' %}?${qs()}`)).json();
+        setCard('top-collector', s.top_manager);
+        setCard('top-reciter', s.top_user);
+    }
+
+    function reload() { loadChart(); loadTops(); }
 
     rangeBtns.forEach(btn => btn.addEventListener('click', () => {
         rangeBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         current = { g: btn.dataset.g, days: btn.dataset.days };
-        load();
+        reload();
     }));
-    userFilter.addEventListener('change', load);
+    userFilter.addEventListener('change', reload);
 
-    load();
+    reload();
 })();
 </script>
 {% endblock %}

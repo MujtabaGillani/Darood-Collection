@@ -7,8 +7,13 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, RedirectView, TemplateView, View
 
-from .forms import LoginForm, RegisterForm
-from .permissions import SuperadminRequiredMixin
+from .forms import (
+    QUICK_ADD_DEFAULT_PASSWORD,
+    LoginForm,
+    QuickAddUserForm,
+    RegisterForm,
+)
+from .permissions import CanAddDaroodMixin, SuperadminRequiredMixin
 
 User = get_user_model()
 
@@ -69,6 +74,28 @@ class HomeRedirectView(LoginRequiredMixin, RedirectView):
         if user.is_manager:
             return str(reverse_lazy('darood_overview'))
         return str(reverse_lazy('my_progress'))
+
+
+class AddSimpleUserView(CanAddDaroodMixin, CreateView):
+    """Managers / superadmins quick-add a simple user (username + defaults)."""
+
+    template_name = 'accounts/add_user.html'
+    form_class = QuickAddUserForm
+    success_url = reverse_lazy('add_darood')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['default_password'] = QUICK_ADD_DEFAULT_PASSWORD
+        return ctx
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(
+            self.request,
+            f'User "{self.object.username}" created as a Simple User '
+            f'(password: {QUICK_ADD_DEFAULT_PASSWORD}). You can now record their darood.',
+        )
+        return response
 
 
 class DashboardView(SuperadminRequiredMixin, TemplateView):

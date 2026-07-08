@@ -331,3 +331,92 @@ class ChartDataAPI(LoginRequiredMixin, View):
                 'totals': [row['total'] for row in series],
             }
         )
+
+
+def _display_name(row, prefix):
+    first = (row.get(prefix + 'first_name') or '').strip()
+    last = (row.get(prefix + 'last_name') or '').strip()
+    full = f'{first} {last}'.strip()
+    return full or row.get(prefix + 'username')
+
+
+def _window_start(request):
+    """(start, end) for a ?days=N window, or (earliest entry, today) for all-time."""
+    from datetime import timedelta
+
+    today = timezone.localdate()
+    days = request.GET.get('days')
+    if days and days.isdigit() and int(days) > 0:
+        return today - timedelta(days=int(days) - 1), today
+    first = approved_entries().order_by('date').values_list('date', flat=True).first()
+    return (first or today), today
+
+
+class ManagerSeriesAPI(CanAddDaroodMixin, View):
+    """Multi-line data: one series per manager = darood they collected."""
+
+    def get(self, request, *args, **kwargs):
+        from django.db.models import Sum
+        from .services import GRANULARITIES, LABEL_FMT, bucket_starts
+
+        granularity = request.GET.get('granularity', 'day')
+        if granularity not in GRANULARITIES:
+            granularity = 'day'
+        start, end = _window_start(request)
+
+        trunc = GRANULARITIES[granularity]
+        rows = (
+            approved_entries()
+            .filter(manager__isnull=False, date__gte=start, date__lte=end)
+            .annotate(bucket=trunc('date'))
+            .values('manager', 'manager__first_name', 'manager__last_name',
+                    'manager__username', 'bucket')
+            .annotate(total=Sum('count'))
+        )
+
+        buckets = bucket_starts(granularity, start, end)
+        fmt = LABEL_FMT.get(granularity, '%d %b')
+
+        managers = {}
+        for row in rows:
+            mid = row['manager']
+            if mid not in managers:
+                managers[mid] = {'label': _display_name(row, 'manager__'), 'data': {}}
+            bucket = row['bucket']
+            if hasattr(bucket, 'date'):
+                bucket = bucket.date()
+            managers[mid]['data'][bucket] = row['total'] or 0
+
+        datasets = [
+            {'label': m['label'], 'data': [m['data'].get(b, 0) for b in buckets]}
+            for m in sorted(managers.values(), key=lambda m: sum(m['data'].values()), reverse=True)
+        ]
+        return JsonResponse(
+            {'labels': [b.strftime(fmt) for b in buckets], 'datasets': datasets}
+        )
+
+
+class TopStatsAPI(CanAddDaroodMixin, View):
+    """Top collector (manager) and top reciter (user) within the window."""
+
+    def get(self, request, *args, **kwargs):
+        from django.db.models import Sum
+
+        start, end = _window_start(request)
+        qs = approved_entries().filter(date__gte=start, date__lte=end)
+
+        top_user_row = (
+            qs.values('user__first_name', 'user__last_name', 'user__username')
+            .annotate(t=Sum('count')).order_by('-t').first()
+        )
+        top_mgr_row = (
+            qs.filter(manager__isnull=False)
+            .values('manager__first_name', 'manager__last_name', 'manager__username')
+            .annotate(t=Sum('count')).order_by('-t').first()
+        )
+        return JsonResponse({
+            'top_user': {'name': _display_name(top_user_row, 'user__'), 'total': top_user_row['t']}
+                        if top_user_row else None,
+            'top_manager': {'name': _display_name(top_mgr_row, 'manager__'), 'total': top_mgr_row['t']}
+                           if top_mgr_row else None,
+        })

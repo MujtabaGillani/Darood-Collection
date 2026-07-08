@@ -18,7 +18,12 @@
 
                     <!-- User search -->
                     <div class="mb-3 position-relative">
-                        <label class="form-label">User</label>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label class="form-label mb-1">User</label>
+                            <a href="{% url 'add_user' %}" class="small text-decoration-none">
+                                <i class="bi bi-person-plus"></i> Add new user
+                            </a>
+                        </div>
                         <input type="text" id="user-search" class="form-control"
                                placeholder="Type a name or username…" autocomplete="off">
                         <div class="search-results" id="search-results"></div>

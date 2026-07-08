@@ -60,3 +60,36 @@ class UserManagementForm(BootstrapMixin, forms.ModelForm):
     class Meta:
         model = User
         fields = ('is_active', 'role')
+
+
+# Default password given to users quick-added by a manager / superadmin.
+QUICK_ADD_DEFAULT_PASSWORD = 'test3450'
+
+
+class QuickAddUserForm(BootstrapMixin, forms.ModelForm):
+    """Managers / superadmins quickly create a simple user by username.
+
+    Name is optional; the account is created active as a Simple User with a
+    known default password so darood can be recorded for them immediately.
+    """
+
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['first_name'].required = False
+        self.fields['last_name'].required = False
+        self.fields['first_name'].label = 'First name (optional)'
+        self.fields['last_name'].label = 'Last name (optional)'
+        self.fields['username'].widget.attrs['autofocus'] = True
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.role = User.Role.SIMPLE
+        user.is_active = True            # active so they appear in the search
+        user.set_password(QUICK_ADD_DEFAULT_PASSWORD)
+        if commit:
+            user.save()
+        return user
