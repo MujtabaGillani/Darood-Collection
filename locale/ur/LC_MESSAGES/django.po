@@ -1,11 +1,12 @@
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: Darood Collection\n"
 "Report-Msgid-Bugs-To: \n"
+"Language: ur\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: ur\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 # --- Brand / navbar / footer ---
@@ -209,8 +210,12 @@ msgstr "درود جمع کرائیں"
 msgid "Submit Your Darood"
 msgstr "اپنا درود جمع کرائیں"
 
-msgid "Choose your manager, the date, and how many darood you recited. Your manager will review it — it counts once approved."
-msgstr "اپنا مینیجر، تاریخ، اور آپ نے کتنے درود پڑھے منتخب کریں۔ آپ کا مینیجر اس کا جائزہ لے گا — منظوری کے بعد یہ شمار ہوگا۔"
+msgid ""
+"Choose your manager, the date, and how many darood you recited. Your manager"
+" will review it — it counts once approved."
+msgstr ""
+"اپنا مینیجر، تاریخ، اور آپ نے کتنے درود پڑھے منتخب کریں۔ آپ کا مینیجر اس کا "
+"جائزہ لے گا — منظوری کے بعد یہ شمار ہوگا۔"
 
 msgid "Send to manager"
 msgstr "مینیجر کو بھیجیں"
@@ -222,8 +227,12 @@ msgid "Select your manager…"
 msgstr "اپنا مینیجر منتخب کریں…"
 
 # --- Approvals ---
-msgid "Review darood submitted by users. Approved entries start counting immediately."
-msgstr "صارفین کے جمع کردہ درود کا جائزہ لیں۔ منظور شدہ اندراجات فوراً شمار ہونا شروع ہو جاتے ہیں۔"
+msgid ""
+"Review darood submitted by users. Approved entries start counting "
+"immediately."
+msgstr ""
+"صارفین کے جمع کردہ درود کا جائزہ لیں۔ منظور شدہ اندراجات فوراً شمار ہونا "
+"شروع ہو جاتے ہیں۔"
 
 msgid "Action"
 msgstr "عمل"
@@ -278,8 +287,12 @@ msgstr "درج کرنے والا"
 msgid "Assalamu alaikum, %(name)s."
 msgstr "السلام علیکم، %(name)s۔"
 
-msgid "You have <strong>%(pending_count)s</strong> submission(s) awaiting your manager's approval. They don't count yet."
-msgstr "آپ کے <strong>%(pending_count)s</strong> اندراج مینیجر کی منظوری کے منتظر ہیں۔ یہ ابھی شمار نہیں ہوتے۔"
+msgid ""
+"You have <strong>%(pending_count)s</strong> submission(s) awaiting your "
+"manager's approval. They don't count yet."
+msgstr ""
+"آپ کے <strong>%(pending_count)s</strong> اندراج مینیجر کی منظوری کے منتظر "
+"ہیں۔ یہ ابھی شمار نہیں ہوتے۔"
 
 msgid "Darood this period"
 msgstr "اس مدت کا درود"
@@ -300,8 +313,14 @@ msgstr "ابھی کوئی اندراج نہیں۔"
 msgid "Add a Simple User"
 msgstr "ایک سادہ صارف شامل کریں"
 
-msgid "Only a username is required. The account is created active with the default password <code>%(default_password)s</code>, so you can start recording their darood right away."
-msgstr "صرف یوزر نیم درکار ہے۔ اکاؤنٹ فعال حالت میں بنتا ہے اور ڈیفالٹ پاس ورڈ <code>%(default_password)s</code> ہوتا ہے، تاکہ آپ فوراً اُن کا درود درج کرنا شروع کر سکیں۔"
+msgid ""
+"Only a username is required. The account is created active with the default "
+"password <code>%(default_password)s</code>, so you can start recording their"
+" darood right away."
+msgstr ""
+"صرف یوزر نیم درکار ہے۔ اکاؤنٹ فعال حالت میں بنتا ہے اور ڈیفالٹ پاس ورڈ "
+"<code>%(default_password)s</code> ہوتا ہے، تاکہ آپ فوراً اُن کا درود درج "
+"کرنا شروع کر سکیں۔"
 
 msgid "optional"
 msgstr "اختیاری"
@@ -310,7 +329,8 @@ msgid "Default password:"
 msgstr "ڈیفالٹ پاس ورڈ:"
 
 msgid "share it with the user; they can log in and view their own progress."
-msgstr "اسے صارف کے ساتھ شیئر کریں؛ وہ لاگ اِن کر کے اپنی کارکردگی دیکھ سکتے ہیں۔"
+msgstr ""
+"اسے صارف کے ساتھ شیئر کریں؛ وہ لاگ اِن کر کے اپنی کارکردگی دیکھ سکتے ہیں۔"
 
 msgid "Create User"
 msgstr "صارف بنائیں"
@@ -339,11 +359,19 @@ msgid "All Time"
 msgstr "تمام وقت"
 
 # --- Flash messages ---
-msgid "Registration successful! Your account is pending approval by an administrator. You will be able to log in once it is activated."
-msgstr "رجسٹریشن کامیاب! آپ کا اکاؤنٹ منتظم کی منظوری کا منتظر ہے۔ فعال ہونے کے بعد آپ لاگ اِن کر سکیں گے۔"
+msgid ""
+"Registration successful! Your account is pending approval by an "
+"administrator. You will be able to log in once it is activated."
+msgstr ""
+"رجسٹریشن کامیاب! آپ کا اکاؤنٹ منتظم کی منظوری کا منتظر ہے۔ فعال ہونے کے بعد "
+"آپ لاگ اِن کر سکیں گے۔"
 
-msgid "User \"%(name)s\" created as a Simple User (password: %(pwd)s). You can now record their darood."
-msgstr "صارف \"%(name)s\" سادہ صارف کے طور پر بن گیا (پاس ورڈ: %(pwd)s)۔ اب آپ اُن کا درود درج کر سکتے ہیں۔"
+msgid ""
+"User \"%(name)s\" created as a Simple User (password: %(pwd)s). You can now "
+"record their darood."
+msgstr ""
+"صارف \"%(name)s\" سادہ صارف کے طور پر بن گیا (پاس ورڈ: %(pwd)s)۔ اب آپ اُن "
+"کا درود درج کر سکتے ہیں۔"
 
 msgid "Super Admin accounts cannot be modified here."
 msgstr "سپر ایڈمن اکاؤنٹس یہاں تبدیل نہیں کیے جا سکتے۔"
@@ -366,8 +394,12 @@ msgstr "نامعلوم عمل۔"
 msgid "Recorded %(count)s darood for %(name)s on %(date)s."
 msgstr "%(name)s کے لیے %(date)s کو %(count)s درود درج کیے گئے۔"
 
-msgid "Submitted %(count)s darood for %(date)s to %(manager)s. It will count once approved."
-msgstr "%(date)s کے لیے %(count)s درود %(manager)s کو جمع کرا دیے گئے۔ منظوری کے بعد یہ شمار ہوں گے۔"
+msgid ""
+"Submitted %(count)s darood for %(date)s to %(manager)s. It will count once "
+"approved."
+msgstr ""
+"%(date)s کے لیے %(count)s درود %(manager)s کو جمع کرا دیے گئے۔ منظوری کے بعد"
+" یہ شمار ہوں گے۔"
 
 msgid "You cannot review this submission."
 msgstr "آپ اس اندراج کا جائزہ نہیں لے سکتے۔"
@@ -392,3 +424,78 @@ msgstr "تھیم تبدیل کریں"
 
 msgid "Toggle light/dark"
 msgstr "روشن/تاریک تبدیل کریں"
+
+msgid "Record"
+msgstr "درج کریں"
+
+msgid "Reserve"
+msgstr "ریزرو"
+
+msgid "Record or reserve"
+msgstr "ریکارڈ یا ریزرو"
+
+msgid "Reserve Darood"
+msgstr "درود ریزرو کریں"
+
+msgid ""
+"Privately stash darood, then submit it later. It stays hidden and does not "
+"count until you submit it."
+msgstr ""
+"درود کو نجی طور پر جمع کریں، پھر بعد میں جمع کرائیں۔ جب تک آپ اسے جمع نہ "
+"کرائیں یہ پوشیدہ رہتا ہے اور شمار نہیں ہوتا۔"
+
+msgid "In reserve"
+msgstr "ریزرو میں"
+
+msgid "Added"
+msgstr "شامل کیا"
+
+msgid "Submitted"
+msgstr "جمع کرایا"
+
+msgid "Add or use reserve"
+msgstr "شامل کریں یا ریزرو استعمال کریں"
+
+msgid "Add to reserve"
+msgstr "ریزرو میں شامل کریں"
+
+msgid "Use reserve"
+msgstr "ریزرو استعمال کریں"
+
+msgid "Add to Reserve"
+msgstr "ریزرو میں شامل کریں"
+
+msgid "Submit from Reserve"
+msgstr "ریزرو سے جمع کرائیں"
+
+msgid ""
+"You have %(balance)s darood in reserve. Choose how many to submit and the "
+"date to record them under."
+msgstr ""
+"آپ کے ریزرو میں %(balance)s درود ہیں۔ منتخب کریں کہ کتنے جمع کرانے ہیں اور "
+"کس تاریخ پر درج کرنے ہیں۔"
+
+msgid "Your reserve is empty. Add some darood first."
+msgstr "آپ کا ریزرو خالی ہے۔ پہلے کچھ درود شامل کریں۔"
+
+msgid "Reserve History"
+msgstr "ریزرو کی تاریخ"
+
+msgid "When"
+msgstr "کب"
+
+msgid "No reserve activity yet."
+msgstr "ابھی تک کوئی ریزرو سرگرمی نہیں۔"
+
+msgid "You only have %(balance)s darood in reserve."
+msgstr "آپ کے ریزرو میں صرف %(balance)s درود ہیں۔"
+
+msgid "Added %(count)s darood to your reserve for %(date)s."
+msgstr "%(date)s کے لیے آپ کے ریزرو میں %(count)s درود شامل کیے گئے۔"
+
+msgid ""
+"Submitted %(count)s darood from your reserve for %(date)s. It now counts "
+"toward the total."
+msgstr ""
+"%(date)s کے لیے آپ کے ریزرو سے %(count)s درود جمع کرائے گئے۔ اب یہ مجموعے "
+"میں شمار ہوں گے۔"

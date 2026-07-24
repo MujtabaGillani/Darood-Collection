@@ -1,20 +1,28 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.generic import CreateView, TemplateView, View
 
 from accounts.permissions import CanAddDaroodMixin
-from .forms import AddDaroodForm, SubmitDaroodForm, addable_users_queryset
-from .models import DaroodEntry
+from .forms import (
+    AddDaroodForm,
+    AddReserveForm,
+    SubmitDaroodForm,
+    UseReserveForm,
+    addable_users_queryset,
+)
+from .models import DaroodEntry, ReserveTransaction
 from .services import (
     PERIODS,
     filled_time_series,
     filter_by_period,
+    reserve_summary,
     time_series,
     total_count,
 )
@@ -30,6 +38,26 @@ def approved_entries():
 def _current_period(request):
     period = request.GET.get('period', 'month')
     return period if period in {k for k, _ in PERIODS} else 'month'
+
+
+def _reserve_context(user, reserve_add_form=None, reserve_use_form=None):
+    """Shared context for the reserve panel on the Record Darood page."""
+    summary = reserve_summary(user)
+    today = timezone.localdate()
+    return {
+        'reserve': summary,
+        'reserve_history': (
+            ReserveTransaction.objects.filter(manager=user).select_related('entry')[:20]
+        ),
+        'reserve_add_form': (
+            reserve_add_form if reserve_add_form is not None
+            else AddReserveForm(initial={'date': today})
+        ),
+        'reserve_use_form': (
+            reserve_use_form if reserve_use_form is not None
+            else UseReserveForm(balance=summary['balance'], initial={'date': today})
+        ),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +103,78 @@ class AddDaroodView(CanAddDaroodMixin, CreateView):
             DaroodEntry.objects.select_related('user')
             .filter(recorded_by=self.request.user)[:10]
         )
+        # Which tab / sub-tab the reserve panel should open on (set after a
+        # reserve action redirects back here).
+        ctx['active_tab'] = 'reserve' if self.request.GET.get('tab') == 'reserve' else 'record'
+        ctx['reserve_sub'] = 'use' if self.request.GET.get('sub') == 'use' else 'add'
+        ctx.update(_reserve_context(self.request.user))
         return ctx
+
+
+# ---------------------------------------------------------------------------
+# Reserve (a manager's private darood stash)
+# ---------------------------------------------------------------------------
+class AddReserveView(CanAddDaroodMixin, View):
+    """A manager adds darood to their own private reserve (not yet public)."""
+
+    def post(self, request):
+        form = AddReserveForm(request.POST)
+        if form.is_valid():
+            txn = form.save(commit=False)
+            txn.manager = request.user
+            txn.kind = ReserveTransaction.Kind.ADD
+            txn.save()
+            messages.success(
+                request,
+                _('Added %(count)s darood to your reserve for %(date)s.') % {
+                    'count': txn.count, 'date': f'{txn.date:%d %b %Y}'},
+            )
+            return redirect(reverse('add_darood') + '?tab=reserve&sub=add')
+
+        for field_errors in form.errors.values():
+            for err in field_errors:
+                messages.error(request, err)
+        return redirect(reverse('add_darood') + '?tab=reserve&sub=add')
+
+
+class UseReserveView(CanAddDaroodMixin, View):
+    """A manager submits part of their reserve, publishing it as approved darood."""
+
+    def post(self, request):
+        summary = reserve_summary(request.user)
+        form = UseReserveForm(request.POST, balance=summary['balance'])
+        if form.is_valid():
+            count = form.cleaned_data['count']
+            entry_date = form.cleaned_data['date']
+            with transaction.atomic():
+                entry = DaroodEntry.objects.create(
+                    user=request.user,
+                    manager=request.user,
+                    recorded_by=request.user,
+                    count=count,
+                    date=entry_date,
+                    status=DaroodEntry.Status.APPROVED,
+                    reviewed_at=timezone.now(),
+                )
+                ReserveTransaction.objects.create(
+                    manager=request.user,
+                    kind=ReserveTransaction.Kind.SUBMIT,
+                    count=count,
+                    date=entry_date,
+                    entry=entry,
+                )
+            messages.success(
+                request,
+                _('Submitted %(count)s darood from your reserve for %(date)s. '
+                  'It now counts toward the total.') % {
+                    'count': count, 'date': f'{entry_date:%d %b %Y}'},
+            )
+            return redirect(reverse('add_darood') + '?tab=reserve&sub=use')
+
+        for field_errors in form.errors.values():
+            for err in field_errors:
+                messages.error(request, err)
+        return redirect(reverse('add_darood') + '?tab=reserve&sub=use')
 
 
 class SubmitDaroodView(LoginRequiredMixin, CreateView):

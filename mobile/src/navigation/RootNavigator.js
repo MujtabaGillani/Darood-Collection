@@ -15,6 +15,7 @@ import RegisterScreen from '../screens/RegisterScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import OverviewScreen from '../screens/OverviewScreen';
 import AddDaroodScreen from '../screens/AddDaroodScreen';
+import ReserveScreen from '../screens/ReserveScreen';
 import MyProgressScreen from '../screens/MyProgressScreen';
 import SubmitDaroodScreen from '../screens/SubmitDaroodScreen';
 import ApprovalsScreen from '../screens/ApprovalsScreen';
@@ -30,6 +31,7 @@ const ICONS = {
   Dashboard: 'grid-outline',
   Overview: 'bar-chart-outline',
   Add: 'add-circle-outline',
+  Reserve: 'lock-closed-outline',
   Approvals: 'checkmark-done-outline',
   Progress: 'trending-up-outline',
   Submit: 'send-outline',
@@ -88,6 +90,9 @@ function RoleTabs() {
       )}
       {(superadmin || manager) && (
         <Tab.Screen name="Add" component={AddDaroodScreen} options={{ title: 'Add Darood' }} />
+      )}
+      {(superadmin || manager) && (
+        <Tab.Screen name="Reserve" component={ReserveScreen} options={{ title: 'Reserve' }} />
       )}
       {!superadmin && !manager && (
         <Tab.Screen name="Progress" component={MyProgressScreen} options={{ title: 'My Progress' }} />

@@ -3,63 +3,160 @@
 {% block title %}{% trans "Add Darood" %} · {% trans "Darood Collection" %}{% endblock %}
 
 {% block content %}
-<div class="row g-4">
+<div class="row g-4" id="darood-add-page" data-tab="{{ active_tab }}" data-sub="{{ reserve_sub }}">
     <div class="col-lg-6">
         <div class="card">
             <div class="card-body p-4">
-                <h1 class="h4 fw-bold mb-1"><i class="bi bi-plus-circle"></i> {% trans "Record Darood" %}</h1>
-                <p class="text-muted small">{% trans "Search a user, pick the date, and enter the count." %}</p>
+                <!-- Record / Reserve toggle -->
+                <div class="btn-group w-100 mb-4" role="group" aria-label="{% trans 'Record or reserve' %}">
+                    <button type="button" class="btn btn-outline-primary tab-btn" data-tab="record">
+                        <i class="bi bi-plus-circle"></i> {% trans "Record" %}
+                    </button>
+                    <button type="button" class="btn btn-outline-primary tab-btn" data-tab="reserve">
+                        <i class="bi bi-safe2"></i> {% trans "Reserve" %}
+                    </button>
+                </div>
 
-                {% if form.non_field_errors %}
-                <div class="alert alert-danger py-2 small">{{ form.non_field_errors }}</div>
-                {% endif %}
+                <!-- ============ RECORD PANE ============ -->
+                <div class="tab-pane" data-pane="record">
+                    <h1 class="h4 fw-bold mb-1"><i class="bi bi-plus-circle"></i> {% trans "Record Darood" %}</h1>
+                    <p class="text-muted small">{% trans "Search a user, pick the date, and enter the count." %}</p>
 
-                <form method="post" id="darood-form">
-                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger py-2 small">{{ form.non_field_errors }}</div>
+                    {% endif %}
 
-                    <!-- User search -->
-                    <div class="mb-3 position-relative">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <label class="form-label mb-1">{% trans "User" %}</label>
-                            <a href="{% url 'add_user' %}" class="small text-decoration-none">
-                                <i class="bi bi-person-plus"></i> {% trans "Add new user" %}
-                            </a>
-                        </div>
-                        <input type="text" id="user-search" class="form-control"
-                               placeholder="{% trans 'Type a name or username…' %}" autocomplete="off">
-                        <div class="search-results" id="search-results"></div>
-                        {{ form.user }}  {# hidden input holding the selected id #}
-                        {% for e in form.user.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                    <form method="post" action="{% url 'add_darood' %}" id="darood-form">
+                        {% csrf_token %}
 
-                        <div id="selected-user" class="selected-user-chip p-2 mt-2 d-none">
+                        <!-- User search -->
+                        <div class="mb-3 position-relative">
                             <div class="d-flex justify-content-between align-items-center">
-                                <span><i class="bi bi-person-check"></i> <strong id="selected-name"></strong>
-                                    <small class="text-muted" id="selected-username"></small></span>
-                                <button type="button" class="btn btn-sm btn-link text-danger p-0" id="clear-user">{% trans "Change" %}</button>
+                                <label class="form-label mb-1">{% trans "User" %}</label>
+                                <a href="{% url 'add_user' %}" class="small text-decoration-none">
+                                    <i class="bi bi-person-plus"></i> {% trans "Add new user" %}
+                                </a>
+                            </div>
+                            <input type="text" id="user-search" class="form-control"
+                                   placeholder="{% trans 'Type a name or username…' %}" autocomplete="off">
+                            <div class="search-results" id="search-results"></div>
+                            {{ form.user }}  {# hidden input holding the selected id #}
+                            {% for e in form.user.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+
+                            <div id="selected-user" class="selected-user-chip p-2 mt-2 d-none">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span><i class="bi bi-person-check"></i> <strong id="selected-name"></strong>
+                                        <small class="text-muted" id="selected-username"></small></span>
+                                    <button type="button" class="btn btn-sm btn-link text-danger p-0" id="clear-user">{% trans "Change" %}</button>
+                                </div>
                             </div>
                         </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ form.date.id_for_label }}">{% trans "Date" %}</label>
+                            {{ form.date }}
+                            {% for e in form.date.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label" for="{{ form.count.id_for_label }}">{% trans "Quantity" %}</label>
+                            {{ form.count }}
+                            {% for e in form.count.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save"></i> {% trans "Save Entry" %}</button>
+                    </form>
+                </div>
+
+                <!-- ============ RESERVE PANE ============ -->
+                <div class="tab-pane" data-pane="reserve">
+                    <h1 class="h4 fw-bold mb-1"><i class="bi bi-safe2"></i> {% trans "Reserve Darood" %}</h1>
+                    <p class="text-muted small">
+                        {% trans "Privately stash darood, then submit it later. It stays hidden and does not count until you submit it." %}
+                    </p>
+
+                    <!-- Summary tiles -->
+                    <div class="row g-2 mb-4">
+                        <div class="col-4">
+                            <div class="card stat-card h-100"><div class="card-body text-center p-2">
+                                <div class="text-muted small">{% trans "In reserve" %}</div>
+                                <div class="stat-value">{{ reserve.balance }}</div>
+                            </div></div>
+                        </div>
+                        <div class="col-4">
+                            <div class="card stat-card h-100"><div class="card-body text-center p-2">
+                                <div class="text-muted small">{% trans "Added" %}</div>
+                                <div class="stat-value">{{ reserve.added }}</div>
+                            </div></div>
+                        </div>
+                        <div class="col-4">
+                            <div class="card stat-card h-100"><div class="card-body text-center p-2">
+                                <div class="text-muted small">{% trans "Submitted" %}</div>
+                                <div class="stat-value">{{ reserve.submitted }}</div>
+                            </div></div>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="{{ form.date.id_for_label }}">{% trans "Date" %}</label>
-                        {{ form.date }}
-                        {% for e in form.date.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                    <!-- Add / Use sub-toggle -->
+                    <div class="btn-group w-100 mb-3" role="group" aria-label="{% trans 'Add or use reserve' %}">
+                        <button type="button" class="btn btn-sm btn-outline-secondary sub-btn" data-sub="add">
+                            <i class="bi bi-plus-lg"></i> {% trans "Add to reserve" %}
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary sub-btn" data-sub="use">
+                            <i class="bi bi-box-arrow-up"></i> {% trans "Use reserve" %}
+                        </button>
                     </div>
 
-                    <div class="mb-4">
-                        <label class="form-label" for="{{ form.count.id_for_label }}">{% trans "Quantity" %}</label>
-                        {{ form.count }}
-                        {% for e in form.count.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                    <!-- Add to reserve -->
+                    <div class="sub-pane" data-subpane="add">
+                        <form method="post" action="{% url 'reserve_add' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ reserve_add_form.date.id_for_label }}">{% trans "Date" %}</label>
+                                {{ reserve_add_form.date }}
+                                {% for e in reserve_add_form.date.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label" for="{{ reserve_add_form.count.id_for_label }}">{% trans "Quantity" %}</label>
+                                {{ reserve_add_form.count }}
+                                {% for e in reserve_add_form.count.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-safe2"></i> {% trans "Add to Reserve" %}</button>
+                        </form>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save"></i> {% trans "Save Entry" %}</button>
-                </form>
+                    <!-- Use reserve -->
+                    <div class="sub-pane" data-subpane="use">
+                        {% if reserve.balance %}
+                        <form method="post" action="{% url 'reserve_use' %}">
+                            {% csrf_token %}
+                            <p class="small text-muted mb-3">
+                                {% blocktrans with balance=reserve.balance %}You have {{ balance }} darood in reserve. Choose how many to submit and the date to record them under.{% endblocktrans %}
+                            </p>
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ reserve_use_form.date.id_for_label }}">{% trans "Date" %}</label>
+                                {{ reserve_use_form.date }}
+                                {% for e in reserve_use_form.date.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label" for="{{ reserve_use_form.count.id_for_label }}">{% trans "Quantity" %}</label>
+                                {{ reserve_use_form.count }}
+                                {% for e in reserve_use_form.count.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-box-arrow-up"></i> {% trans "Submit from Reserve" %}</button>
+                        </form>
+                        {% else %}
+                        <p class="text-center text-muted py-4">{% trans "Your reserve is empty. Add some darood first." %}</p>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="col-lg-6">
-        <div class="card">
+        <!-- Recent entries (record mode) -->
+        <div class="card tab-pane" data-pane="record">
             <div class="card-body p-4">
                 <h2 class="h5 fw-semibold mb-3"><i class="bi bi-clock-history"></i> {% trans "Your Recent Entries" %}</h2>
                 <div class="table-responsive">
@@ -80,6 +177,36 @@
                 </div>
             </div>
         </div>
+
+        <!-- Reserve history (reserve mode) -->
+        <div class="card tab-pane" data-pane="reserve">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-semibold mb-3"><i class="bi bi-clock-history"></i> {% trans "Reserve History" %}</h2>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead><tr><th>{% trans "Action" %}</th><th>{% trans "Date" %}</th><th class="text-end">{% trans "Count" %}</th><th class="text-end">{% trans "When" %}</th></tr></thead>
+                        <tbody>
+                        {% for t in reserve_history %}
+                            <tr>
+                                <td>
+                                    {% if t.kind == 'add' %}
+                                        <span class="badge text-bg-secondary"><i class="bi bi-plus-lg"></i> {% trans "Added" %}</span>
+                                    {% else %}
+                                        <span class="badge text-bg-success"><i class="bi bi-box-arrow-up"></i> {% trans "Submitted" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-muted">{{ t.date|date:"d M Y" }}</td>
+                                <td class="text-end fw-semibold">{{ t.count }}</td>
+                                <td class="text-end text-muted small">{{ t.created_at|date:"d M, H:i" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-4">{% trans "No reserve activity yet." %}</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -87,6 +214,31 @@
 {% block extra_js %}
 <script>
 (function () {
+    // ---- Record / Reserve tab switching (both columns) ----------------------
+    const page = document.getElementById('darood-add-page');
+
+    function setTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach((b) =>
+            b.classList.toggle('active', b.dataset.tab === tab));
+        document.querySelectorAll('.tab-pane').forEach((p) =>
+            p.classList.toggle('d-none', p.dataset.pane !== tab));
+    }
+    function setSub(sub) {
+        document.querySelectorAll('.sub-btn').forEach((b) =>
+            b.classList.toggle('active', b.dataset.sub === sub));
+        document.querySelectorAll('.sub-pane').forEach((p) =>
+            p.classList.toggle('d-none', p.dataset.subpane !== sub));
+    }
+
+    document.querySelectorAll('.tab-btn').forEach((b) =>
+        b.addEventListener('click', () => setTab(b.dataset.tab)));
+    document.querySelectorAll('.sub-btn').forEach((b) =>
+        b.addEventListener('click', () => setSub(b.dataset.sub)));
+
+    setTab(page.dataset.tab || 'record');
+    setSub(page.dataset.sub || 'add');
+
+    // ---- User search (record mode) -----------------------------------------
     const searchInput = document.getElementById('user-search');
     const resultsBox = document.getElementById('search-results');
     const hidden = document.getElementById('{{ form.user.id_for_label }}');

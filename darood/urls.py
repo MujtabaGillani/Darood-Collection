@@ -7,6 +7,10 @@ urlpatterns = [
     path('darood/add/', views.AddDaroodView.as_view(), name='add_darood'),
     path('darood/submit/', views.SubmitDaroodView.as_view(), name='submit_darood'),
 
+    # Reserve (a manager's private stash)
+    path('darood/reserve/add/', views.AddReserveView.as_view(), name='reserve_add'),
+    path('darood/reserve/use/', views.UseReserveView.as_view(), name='reserve_use'),
+
     # Approvals
     path('darood/approvals/', views.ApprovalsView.as_view(), name='approvals'),
     path('darood/<int:pk>/review/', views.ReviewEntryView.as_view(), name='review_entry'),

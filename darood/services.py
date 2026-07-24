@@ -66,6 +66,27 @@ def total_count(queryset):
     return queryset.aggregate(total=Sum('count'))['total'] or 0
 
 
+def reserve_summary(user):
+    """Totals for a manager's private darood reserve.
+
+    Returns a dict with the amount ever ``added``, the amount ever ``submitted``
+    (released into the public record) and the current ``balance`` still held in
+    reserve. Balance never goes negative because submissions are validated
+    against it before being recorded.
+    """
+    from django.db.models import Q
+
+    from .models import ReserveTransaction
+
+    agg = ReserveTransaction.objects.filter(manager=user).aggregate(
+        added=Sum('count', filter=Q(kind=ReserveTransaction.Kind.ADD)),
+        submitted=Sum('count', filter=Q(kind=ReserveTransaction.Kind.SUBMIT)),
+    )
+    added = agg['added'] or 0
+    submitted = agg['submitted'] or 0
+    return {'added': added, 'submitted': submitted, 'balance': added - submitted}
+
+
 LABEL_FMT = {
     'day': '%d %b',
     'week': 'w/c %d %b',   # week commencing (Monday)

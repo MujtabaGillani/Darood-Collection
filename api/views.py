@@ -7,6 +7,7 @@ Business rules mirror the server-rendered views so both clients agree.
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -19,12 +20,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from darood.forms import addable_users_queryset, managers_queryset
-from darood.models import DaroodEntry
+from darood.models import DaroodEntry, ReserveTransaction
 from darood.services import (
     GRANULARITIES,
     PERIODS,
     filled_time_series,
     filter_by_period,
+    reserve_summary,
     time_series,
     total_count,
 )
@@ -38,6 +40,9 @@ from .serializers import (
     QuickAddUserSerializer,
     RecordDaroodSerializer,
     RegisterSerializer,
+    ReserveAddSerializer,
+    ReserveSubmitSerializer,
+    ReserveTransactionSerializer,
     SubmitDaroodSerializer,
     UserSerializer,
     UserUpdateSerializer,
@@ -282,6 +287,66 @@ class SubmitDaroodView(APIView):
             status=DaroodEntry.Status.PENDING,
         )
         return Response(DaroodEntrySerializer(entry).data, status=status.HTTP_201_CREATED)
+
+
+# ---------------------------------------------------------------------------
+# Reserve (a manager's private darood stash)
+# ---------------------------------------------------------------------------
+class ReserveView(APIView):
+    """Summary + history of the requesting manager's private reserve."""
+
+    permission_classes = [CanAddDarood]
+
+    def get(self, request):
+        summary = reserve_summary(request.user)
+        history = ReserveTransaction.objects.filter(manager=request.user)[:30]
+        return Response({
+            **summary,
+            'history': ReserveTransactionSerializer(history, many=True).data,
+        })
+
+
+class ReserveAddView(APIView):
+    """Add darood to the reserve — creates no public entry, counts nothing yet."""
+
+    permission_classes = [CanAddDarood]
+
+    def post(self, request):
+        serializer = ReserveAddSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(manager=request.user, kind=ReserveTransaction.Kind.ADD)
+        return Response(reserve_summary(request.user), status=status.HTTP_201_CREATED)
+
+
+class ReserveSubmitView(APIView):
+    """Release part of the reserve into the record as an approved entry."""
+
+    permission_classes = [CanAddDarood]
+
+    def post(self, request):
+        summary = reserve_summary(request.user)
+        serializer = ReserveSubmitSerializer(data=request.data, balance=summary['balance'])
+        serializer.is_valid(raise_exception=True)
+        count = serializer.validated_data['count']
+        entry_date = serializer.validated_data['date']
+        with transaction.atomic():
+            entry = DaroodEntry.objects.create(
+                user=request.user,
+                manager=request.user,
+                recorded_by=request.user,
+                count=count,
+                date=entry_date,
+                status=DaroodEntry.Status.APPROVED,
+                reviewed_at=timezone.now(),
+            )
+            ReserveTransaction.objects.create(
+                manager=request.user,
+                kind=ReserveTransaction.Kind.SUBMIT,
+                count=count,
+                date=entry_date,
+                entry=entry,
+            )
+        return Response(reserve_summary(request.user), status=status.HTTP_201_CREATED)
 
 
 class MyProgressView(APIView):

@@ -27,6 +27,11 @@ urlpatterns = [
     # Darood
     path('darood/record/', views.RecordDaroodView.as_view(), name='darood_record'),
     path('darood/submit/', views.SubmitDaroodView.as_view(), name='darood_submit'),
+
+    # Reserve (a manager's private stash)
+    path('darood/reserve/', views.ReserveView.as_view(), name='darood_reserve'),
+    path('darood/reserve/add/', views.ReserveAddView.as_view(), name='darood_reserve_add'),
+    path('darood/reserve/submit/', views.ReserveSubmitView.as_view(), name='darood_reserve_submit'),
     path('darood/mine/', views.MyProgressView.as_view(), name='darood_mine'),
     path('darood/overview/', views.OverviewView.as_view(), name='darood_overview'),
     path('darood/approvals/', views.ApprovalsView.as_view(), name='darood_approvals'),

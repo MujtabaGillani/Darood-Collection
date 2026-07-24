@@ -8,7 +8,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from accounts.forms import QUICK_ADD_DEFAULT_PASSWORD
 from darood.forms import addable_users_queryset, managers_queryset
-from darood.models import DaroodEntry
+from darood.models import DaroodEntry, ReserveTransaction
 
 User = get_user_model()
 
@@ -207,3 +207,47 @@ class SubmitDaroodSerializer(_DaroodWriteMixin, serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
         self.fields['manager'].queryset = managers_queryset()
         self.fields['manager'].required = True
+
+
+# ---------------------------------------------------------------------------
+# Reserve (a manager's private darood stash)
+# ---------------------------------------------------------------------------
+class ReserveTransactionSerializer(serializers.ModelSerializer):
+    """Read serializer for a manager's reserve history."""
+
+    kind_display = serializers.CharField(source='get_kind_display', read_only=True)
+
+    class Meta:
+        model = ReserveTransaction
+        fields = ('id', 'kind', 'kind_display', 'count', 'date', 'created_at')
+
+
+class ReserveAddSerializer(_DaroodWriteMixin, serializers.ModelSerializer):
+    """A manager adds darood to their own private reserve (qty + date)."""
+
+    class Meta:
+        model = ReserveTransaction
+        fields = ('date', 'count')
+
+
+class ReserveSubmitSerializer(_DaroodWriteMixin, serializers.ModelSerializer):
+    """A manager submits part of their reserve, releasing it into the record.
+
+    The chosen count is validated against the balance passed in from the view.
+    """
+
+    class Meta:
+        model = ReserveTransaction
+        fields = ('date', 'count')
+
+    def __init__(self, *args, balance=0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.balance = balance
+
+    def validate_count(self, value):
+        value = super().validate_count(value)
+        if value > self.balance:
+            raise serializers.ValidationError(
+                f'You only have {self.balance} darood in reserve.'
+            )
+        return value

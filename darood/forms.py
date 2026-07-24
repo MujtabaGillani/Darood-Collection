@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from .models import DaroodEntry
+from .models import DaroodEntry, ReserveTransaction
 
 User = get_user_model()
 
@@ -93,3 +93,66 @@ class SubmitDaroodForm(NoFutureDateMixin, forms.ModelForm):
         self.fields['manager'].required = True
         self.fields['manager'].empty_label = _('Select your manager…')
         self.fields['manager'].widget.attrs['class'] = 'form-select'
+
+
+class AddReserveForm(NoFutureDateMixin, forms.ModelForm):
+    """A manager stashes darood into their own private reserve (qty + date).
+
+    Nothing is published — no :class:`DaroodEntry` is created — so the count
+    stays invisible to admins and out of every total until it is submitted.
+    """
+
+    class Meta:
+        model = ReserveTransaction
+        fields = ('date', 'count')
+        widgets = {
+            'date': forms.DateInput(
+                attrs={'type': 'date', 'class': 'form-control'},
+                format='%Y-%m-%d',
+            ),
+            'count': forms.NumberInput(
+                attrs={'class': 'form-control', 'min': 1, 'placeholder': 'e.g. 500'}
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['date'].input_formats = ['%Y-%m-%d']
+        self.fields['date'].widget.attrs['max'] = timezone.localdate().isoformat()
+
+
+class UseReserveForm(NoFutureDateMixin, forms.ModelForm):
+    """A manager releases part of their reserve into the public record.
+
+    The chosen ``count`` may not exceed the manager's current reserve balance;
+    the balance is passed in so it can be validated server-side.
+    """
+
+    class Meta:
+        model = ReserveTransaction
+        fields = ('date', 'count')
+        widgets = {
+            'date': forms.DateInput(
+                attrs={'type': 'date', 'class': 'form-control'},
+                format='%Y-%m-%d',
+            ),
+            'count': forms.NumberInput(
+                attrs={'class': 'form-control', 'min': 1, 'placeholder': 'e.g. 500'}
+            ),
+        }
+
+    def __init__(self, *args, balance=0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.balance = balance
+        self.fields['date'].input_formats = ['%Y-%m-%d']
+        self.fields['date'].widget.attrs['max'] = timezone.localdate().isoformat()
+        self.fields['count'].widget.attrs['max'] = balance
+
+    def clean_count(self):
+        count = self.cleaned_data.get('count')
+        if count and count > self.balance:
+            raise forms.ValidationError(
+                _('You only have %(balance)s darood in reserve.')
+                % {'balance': self.balance}
+            )
+        return count
