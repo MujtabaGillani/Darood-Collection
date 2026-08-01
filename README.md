@@ -148,7 +148,9 @@ docker compose down -v          # stop and delete the database volume
 | `DJANGO_SECRET_KEY` | insecure dev key | **Set a real value in production.** |
 | `DJANGO_DEBUG` | `False` (image) / `True` (local) | Debug mode. |
 | `DJANGO_ALLOWED_HOSTS` | `*` | Comma-separated allowed hosts. |
-| `DJANGO_CSRF_TRUSTED_ORIGINS` | — | Comma-separated https origins for CSRF. |
+| `DJANGO_CSRF_TRUSTED_ORIGINS` | — | Comma-separated origins trusted for POST. Include the port if it isn't 80/443; a bare `host:port` covers http and https. |
+| `DJANGO_USE_X_FORWARDED_HOST` | `False` | Read the public host from `X-Forwarded-Host`. |
+| `DJANGO_USE_X_FORWARDED_PORT` | `False` | Read the public port from `X-Forwarded-Port`. |
 | `DJANGO_SECURE_SSL` | `False` | Enable secure cookies + HSTS + SSL redirect (behind TLS). |
 | `DJANGO_SQLITE_PATH` | `/app/data/db.sqlite3` | DB file location (kept on the volume). |
 | `HOST_PORT` | `8000` | Host port mapped to the container. |
@@ -157,6 +159,15 @@ docker compose down -v          # stop and delete the database volume
 
 Behind a reverse proxy that terminates TLS, set `DJANGO_SECURE_SSL=True` and add
 your domain to `DJANGO_ALLOWED_HOSTS` and `DJANGO_CSRF_TRUSTED_ORIGINS`.
+
+**"CSRF verification failed" on login behind a proxy.** `ALLOWED_HOSTS=*` does
+not cover this: Django separately checks the browser's `Origin` header against
+`CSRF_TRUSTED_ORIGINS`, scheme and port included. Serving on
+`http://203.0.113.10:8085` while nginx forwards `Host: 203.0.113.10` to the
+container makes the two disagree, so every POST is rejected. Fix it by setting
+`DJANGO_CSRF_TRUSTED_ORIGINS=203.0.113.10:8085` (or by having nginx pass
+`proxy_set_header Host $http_host;`, which keeps the port intact). The exact
+reason is logged to `docker logs` even with `DEBUG=False`.
 
 ## Notes for production
 

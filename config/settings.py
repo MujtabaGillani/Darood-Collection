@@ -27,33 +27,54 @@ SECRET_KEY = os.environ.get(
     'django-insecure-j=91b2@y_v2e8ec&$3)s3ai*trc8=b-cvs5$82ob=2#$(k@e_p',
 )
 
+def _env_bool(name, default='False'):
+    return os.environ.get(name, default).lower() in ('1', 'true', 'yes', 'on')
+
+
+def _env_list(name, default=''):
+    return [v.strip() for v in os.environ.get(name, default).split(',') if v.strip()]
+
+
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes', 'on')
+DEBUG = _env_bool('DJANGO_DEBUG', 'True')
 
 # Comma-separated list, e.g. "darood.example.com,127.0.0.1". Defaults to "*".
-ALLOWED_HOSTS = [
-    h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',') if h.strip()
-]
+ALLOWED_HOSTS = _env_list('DJANGO_ALLOWED_HOSTS', '*')
 
 # Origins trusted for unsafe (POST) requests. ALLOWED_HOSTS covers the Host
-# header, but Django also checks the Origin against this list for CSRF. Needed
-# when serving through an HTTPS tunnel such as ngrok or a real domain.
+# header, but Django also checks the browser's Origin against this list for
+# CSRF -- and that comparison includes the scheme and the port. So an app
+# reached on a non-default port (nginx publishing :8085) needs an entry that
+# spells the port out, even though the host itself is already allowed.
+# Entries without a scheme are expanded to both http:// and https://.
+def _as_origins(entry):
+    if '://' in entry:
+        return [entry]
+    return [f'http://{entry}', f'https://{entry}']
+
+
 CSRF_TRUSTED_ORIGINS = [
     'https://*.ngrok-free.app',
     'https://*.ngrok-free.dev',
     'https://*.ngrok.app',
     'https://*.ngrok.io',
 ]
-CSRF_TRUSTED_ORIGINS += [
-    o.strip()
-    for o in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',')
-    if o.strip()
-]
+for _entry in _env_list('DJANGO_CSRF_TRUSTED_ORIGINS'):
+    CSRF_TRUSTED_ORIGINS += [
+        o for o in _as_origins(_entry) if o not in CSRF_TRUSTED_ORIGINS
+    ]
+
+# A reverse proxy that forwards to the container on port 8000 usually rewrites
+# the Host header, hiding the port the browser actually used and breaking the
+# CSRF origin check above. Turn these on when the proxy sends X-Forwarded-Host
+# / X-Forwarded-Port, so request.get_host() reflects the public URL.
+USE_X_FORWARDED_HOST = _env_bool('DJANGO_USE_X_FORWARDED_HOST')
+USE_X_FORWARDED_PORT = _env_bool('DJANGO_USE_X_FORWARDED_PORT')
 
 # HTTPS hardening. Enable once TLS is terminated in front of the app
 # (DJANGO_SECURE_SSL=True). Off by default so the container also works over
 # plain HTTP behind a proxy while you get things wired up.
-if os.environ.get('DJANGO_SECURE_SSL', 'False').lower() in ('1', 'true', 'yes', 'on'):
+if _env_bool('DJANGO_SECURE_SSL'):
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -244,11 +265,26 @@ SIMPLE_JWT = {
 # Native apps don't enforce CORS, but Expo web / browsers do. Allow all in
 # DEBUG; in production list the exact origins via DJANGO_CORS_ORIGINS.
 CORS_ALLOW_ALL_ORIGINS = DEBUG
-CORS_ALLOWED_ORIGINS = [
-    o.strip()
-    for o in os.environ.get('DJANGO_CORS_ORIGINS', '').split(',')
-    if o.strip()
-]
+CORS_ALLOWED_ORIGINS = _env_list('DJANGO_CORS_ORIGINS')
+
+# --- Logging ----------------------------------------------------------------
+# Django's default console handler is muted when DEBUG=False, which hides the
+# reason behind rejected requests (a CSRF 403 says only "verification failed").
+# Send security warnings to stdout so `docker logs` explains them.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {'format': '[{levelname}] {name}: {message}', 'style': '{'},
+    },
+    'handlers': {
+        'stdout': {'class': 'logging.StreamHandler', 'formatter': 'simple'},
+    },
+    'loggers': {
+        'django.security': {'handlers': ['stdout'], 'level': 'WARNING', 'propagate': False},
+        'django.request': {'handlers': ['stdout'], 'level': 'WARNING', 'propagate': False},
+    },
+}
 
 # Show Django messages with Bootstrap-friendly CSS classes.
 from django.contrib.messages import constants as message_constants  # noqa: E402

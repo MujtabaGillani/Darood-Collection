@@ -54,7 +54,13 @@ export function getRefreshToken() {
 export const api = axios.create({
   baseURL: API_BASE,
   timeout: 15000,
-  headers: { 'Content-Type': 'application/json' },
+  headers: {
+    'Content-Type': 'application/json',
+    // ngrok's free tier serves an HTML browser-warning page unless this header
+    // is present; without it API calls get HTML instead of JSON. Harmless on
+    // any other backend.
+    'ngrok-skip-browser-warning': 'true',
+  },
 });
 
 api.interceptors.request.use((config) => {
@@ -77,7 +83,11 @@ api.interceptors.response.use(
         if (!refreshing) {
           refreshing = (async () => {
             if (!refreshToken) throw new Error('no refresh token');
-            const resp = await axios.post(`${API_BASE}/auth/refresh/`, { refresh: refreshToken });
+            const resp = await axios.post(
+              `${API_BASE}/auth/refresh/`,
+              { refresh: refreshToken },
+              { headers: { 'ngrok-skip-browser-warning': 'true' } },
+            );
             // Preserve the persist choice (don't start writing to disk if the
             // user logged in without "Remember me").
             await setTokens({ access: resp.data.access, refresh: resp.data.refresh });
