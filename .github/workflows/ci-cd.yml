@@ -73,6 +73,28 @@ jobs:
     runs-on: ubuntu-latest
     environment: production  # lets you add a required reviewer in repo settings
     steps:
+      # Without this, a missing secret surfaces as `usage: ssh` and exit 255,
+      # because the destination collapses to a bare "@".
+      - name: Check required secrets are set
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          missing=
+          for name in DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS DEPLOY_HOST DEPLOY_USER DEPLOY_PATH; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Missing or empty secrets:$missing"
+            echo "Add them under Settings -> Secrets and variables -> Actions,"
+            echo "on the *Secrets* tab (values on the Variables tab are not visible as secrets.*)."
+            exit 1
+          fi
+          echo "All five secrets are present."
+
       - name: Configure SSH
         env:
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
