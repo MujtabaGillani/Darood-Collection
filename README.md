@@ -178,37 +178,73 @@ and pull request:
 |-----|--------------|-------------------|
 | `test` | `manage.py check`, `makemigrations --check` (fails if a model changed without a migration), `manage.py test` | yes |
 | `build` | `docker build` of the real Dockerfile, so a broken build or `collectstatic` failure shows up here | yes |
-| `deploy` | SSH to the server, fast-forward to `origin/main`, run [`scripts/deploy.sh`](scripts/deploy.sh) | — |
+| `deploy` | On a self-hosted runner: fast-forward to `origin/main`, run [`scripts/deploy.sh`](scripts/deploy.sh) | — |
 
 `deploy` only runs for pushes to `main` that pass both other jobs. Use the
 **Run workflow** button (`workflow_dispatch`) to redeploy the current `main`
 without pushing. Deploys are serialised — a second push waits rather than
 interrupting a build in progress.
 
-### One-time setup
+`test` and `build` run on GitHub's hosted runners; only `deploy` runs on the
+server. That split matters: a pull request from a fork never reaches the
+self-hosted runner.
 
-Generate a key pair for the runner to log in with, on the server:
+### One-time setup: the self-hosted runner
+
+The server only accepts SSH from the office, and GitHub publishes ~7,300 CIDRs
+for its hosted runners, so allowlisting them is impractical. Instead the runner
+lives on the server and polls GitHub **outbound** — no inbound port required.
+
+Install it from **Settings → Actions → Runners → New self-hosted runner**
+(Linux x64), which supplies a registration token. Then, as `serveradmin`:
 
 ```bash
-ssh-keygen -t ed25519 -C 'github-actions-deploy' -f ~/.ssh/gh_deploy -N ''
-cat ~/.ssh/gh_deploy.pub >> ~/.ssh/authorized_keys
-cat ~/.ssh/gh_deploy          # the private key -> DEPLOY_SSH_KEY secret
-ssh-keyscan -H <server-ip>    # -> DEPLOY_KNOWN_HOSTS secret
+mkdir -p ~/actions-runner && cd ~/actions-runner
+# The setup page shows the current version; v2.336.0 was latest at time of writing.
+curl -o runner.tar.gz -L https://github.com/actions/runner/releases/download/v2.336.0/actions-runner-linux-x64-2.336.0.tar.gz
+tar xzf runner.tar.gz && rm runner.tar.gz
+
+./config.sh --unattended \
+  --url https://github.com/MujtabaGillani/Darood-Collection \
+  --token <TOKEN-FROM-THE-PAGE> \
+  --name server-prod-01 \
+  --labels darood-prod
+
+sudo ./svc.sh install serveradmin   # run as serveradmin, for docker access
+sudo ./svc.sh start
+sudo ./svc.sh status
 ```
 
-Then add these under **Settings → Secrets and variables → Actions**:
+The `darood-prod` label is what `runs-on: [self-hosted, linux, darood-prod]`
+matches, so the job can't accidentally land on a runner belonging to another
+project on the same box.
+
+Run the service as `serveradmin` specifically — that user is in the `docker`
+group, which [`scripts/deploy.sh`](scripts/deploy.sh) needs. Verify with
+`docker ps` (no sudo).
+
+Only one secret remains, and it's optional:
 
 | Secret | Value |
 |--------|-------|
-| `DEPLOY_SSH_KEY` | Contents of `~/.ssh/gh_deploy` (the private key, including the BEGIN/END lines) |
-| `DEPLOY_KNOWN_HOSTS` | Output of `ssh-keyscan -H <server-ip>` — pins the host key so a spoofed server can't collect your key |
-| `DEPLOY_HOST` | Server IP or hostname |
-| `DEPLOY_USER` | `serveradmin` |
-| `DEPLOY_PATH` | `/srv/hosting/apps/Darood-Collection` |
-| `DEPLOY_PORT` | Only if SSH isn't on 22 |
+| `DEPLOY_PATH` | `/srv/hosting/apps/Darood-Collection` — falls back to this literal if unset |
 
-The deploy user needs to run `docker` without a password prompt:
-`sudo usermod -aG docker serveradmin` (log out and back in to take effect).
+`DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `DEPLOY_HOST` and `DEPLOY_USER` are no
+longer used and should be deleted.
+
+### Self-hosted runners and public visibility
+
+This repo is public, so the runner deserves care: it executes workflow code on
+the production host. Two safeguards are in place —
+
+- `deploy` is gated by `if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'`, and a first step re-checks both at runtime in case that
+  condition is ever loosened by mistake.
+- `test` and `build` pin `runs-on: ubuntu-latest`, so untrusted code has no
+  path to the runner.
+
+Also set **Settings → Actions → General → Fork pull request workflows** to
+*Require approval for all external contributors*. If the repo ever gains
+outside contributors, consider making it private instead.
 
 ### What the deploy does differently from doing it by hand
 

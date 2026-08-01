@@ -8,6 +8,11 @@ on:
     branches: [main]
   workflow_dispatch:  # "Run workflow" button, for redeploying without a push
 
+# Least privilege: nothing here writes back to the repo. Matters more than
+# usual because the deploy job runs on a runner inside production.
+permissions:
+  contents: read
+
 # Never let two deploys touch the server at once. Queue them instead of
 # cancelling: a half-finished `docker compose up` is worse than a slow one.
 concurrency:
@@ -66,79 +71,56 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  # Runs on a self-hosted runner installed on server-prod-01. The runner polls
+  # GitHub outbound, so the server needs no inbound SSH from the internet --
+  # port 22 stays closed to everything but the office.
   deploy:
     name: Deploy to production
     needs: [test, build]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, darood-prod]
     environment: production  # lets you add a required reviewer in repo settings
     steps:
-      # Without this, a missing secret surfaces as `usage: ssh` and exit 255,
-      # because the destination collapses to a bare "@".
-      - name: Check required secrets are set
+      # This runner sits on the production box and the repo is public, so the
+      # `if:` above is load-bearing. Re-check at runtime: if that condition is
+      # ever loosened by accident, this still refuses to run untrusted code.
+      # Values come through env, never interpolated into the script, so a
+      # hostile ref name can't inject shell.
+      - name: Refuse to deploy anything but a push to main
         env:
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
         run: |
-          missing=
-          for name in DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS DEPLOY_HOST DEPLOY_USER DEPLOY_PATH; do
-            [ -n "${!name}" ] || missing="$missing $name"
-          done
-          if [ -n "$missing" ]; then
-            echo "::error::Missing or empty secrets:$missing"
-            echo "Add them under Settings -> Secrets and variables -> Actions,"
-            echo "on the *Secrets* tab (values on the Variables tab are not visible as secrets.*)."
+          if [ "$REF" != "refs/heads/main" ]; then
+            echo "::error::Refusing to deploy ref '$REF'"
             exit 1
           fi
-          echo "All five secrets are present."
+          case "$EVENT" in
+            push|workflow_dispatch) ;;
+            *) echo "::error::Refusing to deploy on event '$EVENT'"; exit 1 ;;
+          esac
+          echo "Gate passed: $EVENT on $REF"
 
-      - name: Configure SSH
+      - name: Pull and restart
         env:
-          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
-        run: |
-          install -d -m 700 ~/.ssh
-          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
-
-      - name: Pull and restart on the server
-        env:
-          SSH_HOST: ${{ secrets.DEPLOY_HOST }}
-          SSH_USER: ${{ secrets.DEPLOY_USER }}
-          SSH_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
-          # The heredoc is quoted, so nothing below is expanded by this runner.
-          # Values the remote side needs arrive as positional args to `bash -s`.
-          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" \
-              -o BatchMode=yes -o ConnectTimeout=15 \
-              "$SSH_USER@$SSH_HOST" \
-              "bash -s -- '$DEPLOY_PATH' 'main'" <<'REMOTE'
           set -euo pipefail
-          DEPLOY_PATH="$1"
-          BRANCH="$2"
+          cd "${DEPLOY_PATH:-/srv/hosting/apps/Darood-Collection}"
 
-          cd "$DEPLOY_PATH"
-
-          # `reset --hard` below discards edits to tracked files. .env is
-          # gitignored so it survives, but say so loudly if anything else
-          # is about to be thrown away.
+          # `reset --hard` discards edits to tracked files. .env and the
+          # compose override are gitignored so they survive, but say so
+          # loudly if anything else is about to be thrown away.
           if ! git diff --quiet HEAD; then
             echo "WARNING: discarding local changes to tracked files:"
             git status --short
           fi
 
-          echo "==> Fetching origin/$BRANCH"
-          git fetch --prune origin "$BRANCH"
-          git reset --hard "origin/$BRANCH"
+          echo "==> Fetching origin/main"
+          git fetch --prune origin main
+          git reset --hard origin/main
           echo "==> Now at $(git log -1 --oneline)"
 
-          # Run the freshly-pulled script, not the one that was on disk when
-          # this SSH session started.
+          # Runs the freshly-pulled script, not the one that was on disk when
+          # this job started.
           bash scripts/deploy.sh
-          REMOTE
