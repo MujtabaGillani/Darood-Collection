@@ -17,6 +17,16 @@ HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-90}"
 
 cd "$(dirname "$0")/.."
 
+# Connecting to loopback makes nginx forward `Host: 127.0.0.1`, which Django
+# rejects with 400 DisallowedHost unless ALLOWED_HOSTS happens to list it. Send
+# the host a real visitor uses instead, taken from .env so the public address
+# stays out of the repo. ALLOWED_HOSTS=* needs no override.
+if [ -z "${HEALTH_HOST:-}" ] && [ -f .env ]; then
+    HEALTH_HOST="$(sed -n 's/^[[:space:]]*DJANGO_ALLOWED_HOSTS=//p' .env \
+        | tr ',' '\n' | head -1 | tr -d ' \r\"')"
+fi
+[ "${HEALTH_HOST:-}" = '*' ] && HEALTH_HOST=''
+
 log() { printf '==> %s\n' "$*"; }
 
 # The prod overlay puts the container on nginx's proxy_net. Every compose call
@@ -44,11 +54,18 @@ if docker ps --format '{{.Names}}' | grep -qx infra_nginx; then
     fi
 fi
 
-log "Waiting up to ${HEALTH_TIMEOUT}s for $HEALTH_URL"
+curl_args=(-sS -o /dev/null -w '%{http_code}')
+if [ -n "${HEALTH_HOST:-}" ]; then
+    curl_args+=(-H "Host: $HEALTH_HOST")
+    log "Waiting up to ${HEALTH_TIMEOUT}s for $HEALTH_URL (Host: $HEALTH_HOST)"
+else
+    log "Waiting up to ${HEALTH_TIMEOUT}s for $HEALTH_URL"
+fi
+
 code=000
 deadline=$((SECONDS + HEALTH_TIMEOUT))
 while [ "$SECONDS" -lt "$deadline" ]; do
-    code="$(curl -sS -o /dev/null -w '%{http_code}' "$HEALTH_URL" 2>/dev/null || echo 000)"
+    code="$(curl "${curl_args[@]}" "$HEALTH_URL" 2>/dev/null || echo 000)"
     [ "$code" = "200" ] && break
     sleep 3
 done
