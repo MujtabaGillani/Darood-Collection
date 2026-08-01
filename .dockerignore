@@ -19,6 +19,12 @@ staticfiles/
 # Git & CI
 .git/
 .gitignore
+.github/
+scripts/
+
+# React Native client -- not part of the Django image, and node_modules would
+# balloon the build context (and therefore every deploy).
+mobile/
 
 # Editor / OS
 .vscode/

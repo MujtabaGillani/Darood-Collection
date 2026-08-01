@@ -1,0 +1,122 @@
+name: CI/CD
+
+# Every push and PR is tested. Pushes to main that pass also deploy.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:  # "Run workflow" button, for redeploying without a push
+
+# Never let two deploys touch the server at once. Queue them instead of
+# cancelling: a half-finished `docker compose up` is worse than a slow one.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'  # matches the Dockerfile base image
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Django system checks
+        env:
+          DJANGO_DEBUG: 'False'
+          DJANGO_SECRET_KEY: ci-only-not-a-real-secret
+        run: python manage.py check
+
+      - name: Fail if a model change is missing its migration
+        env:
+          DJANGO_SECRET_KEY: ci-only-not-a-real-secret
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run tests
+        env:
+          DJANGO_SECRET_KEY: ci-only-not-a-real-secret
+        run: python manage.py test --verbosity 2
+
+  build:
+    name: Build image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The default docker driver can't read/write the GitHub Actions cache;
+      # buildx installs the container driver that can.
+      - uses: docker/setup-buildx-action@v3
+
+      # Builds exactly what the server will build, so a broken Dockerfile or a
+      # collectstatic failure surfaces here instead of mid-deploy.
+      - name: docker build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: darood-collection:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to production
+    needs: [test, build]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: production  # lets you add a required reviewer in repo settings
+    steps:
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Pull and restart on the server
+        env:
+          SSH_HOST: ${{ secrets.DEPLOY_HOST }}
+          SSH_USER: ${{ secrets.DEPLOY_USER }}
+          SSH_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          # The heredoc is quoted, so nothing below is expanded by this runner.
+          # Values the remote side needs arrive as positional args to `bash -s`.
+          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" \
+              -o BatchMode=yes -o ConnectTimeout=15 \
+              "$SSH_USER@$SSH_HOST" \
+              "bash -s -- '$DEPLOY_PATH' 'main'" <<'REMOTE'
+          set -euo pipefail
+          DEPLOY_PATH="$1"
+          BRANCH="$2"
+
+          cd "$DEPLOY_PATH"
+
+          # `reset --hard` below discards edits to tracked files. .env is
+          # gitignored so it survives, but say so loudly if anything else
+          # is about to be thrown away.
+          if ! git diff --quiet HEAD; then
+            echo "WARNING: discarding local changes to tracked files:"
+            git status --short
+          fi
+
+          echo "==> Fetching origin/$BRANCH"
+          git fetch --prune origin "$BRANCH"
+          git reset --hard "origin/$BRANCH"
+          echo "==> Now at $(git log -1 --oneline)"
+
+          # Run the freshly-pulled script, not the one that was on disk when
+          # this SSH session started.
+          bash scripts/deploy.sh
+          REMOTE

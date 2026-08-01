@@ -206,6 +206,12 @@
                                 <i class="bi bi-eye"></i>
                             </a>
                             {% if not u.is_superadmin %}
+                            <button type="button" class="btn btn-sm btn-outline-secondary js-pwd-btn"
+                                    data-bs-toggle="modal" data-bs-target="#pwdModal"
+                                    data-action="{% url 'update_user' u.pk %}" data-name="{{ u.full_name }}"
+                                    title="{% trans 'Change password' %}">
+                                <i class="bi bi-key"></i>
+                            </button>
                             <form method="post" action="{% url 'update_user' u.pk %}" class="d-inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="toggle_active">
@@ -224,6 +230,55 @@
                 </tbody>
             </table>
         </div>
+    </div>
+</div>
+
+<!-- Change-password dialog: one modal shared by every row; the JS below fills
+     in which user it posts to. -->
+<div class="modal fade" id="pwdModal" tabindex="-1" aria-labelledby="pwdModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="post" id="pwdForm" class="modal-content">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="set_password">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pwdModalLabel">
+                    <i class="bi bi-key"></i> {% trans "Change Password" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">
+                    {% trans "Set a new password for" %} <strong id="pwdUser"></strong>.
+                    {% trans "Existing passwords are stored encrypted and cannot be read back — set a new one here and share it with the user." %}
+                </p>
+                <div class="mb-3">
+                    <label class="form-label" for="new_password1">{% trans "New password" %}</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="new_password1" name="new_password1"
+                               autocomplete="new-password" required>
+                        <button class="btn btn-outline-secondary toggle-password" type="button"
+                                data-target="new_password1" aria-label="{% trans 'Show password' %}">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-1">
+                    <label class="form-label" for="new_password2">{% trans "Confirm password" %}</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="new_password2" name="new_password2"
+                               autocomplete="new-password" required>
+                        <button class="btn btn-outline-secondary toggle-password" type="button"
+                                data-target="new_password2" aria-label="{% trans 'Show password' %}">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> {% trans "Update Password" %}</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
@@ -374,6 +429,29 @@
     });
 
     reload();
+})();
+
+// Change-password modal: point the shared form at the row that opened it and
+// start from empty, hidden fields every time.
+(function () {
+    const modal = document.getElementById('pwdModal');
+    if (!modal) return;
+    const form = document.getElementById('pwdForm');
+    const nameEl = document.getElementById('pwdUser');
+    const inputs = form.querySelectorAll('input[type="password"], input[name^="new_password"]');
+
+    modal.addEventListener('show.bs.modal', (e) => {
+        const btn = e.relatedTarget;
+        if (!btn) return;
+        form.action = btn.dataset.action;
+        nameEl.textContent = btn.dataset.name;
+        inputs.forEach(i => { i.value = ''; i.type = 'password'; });
+        form.querySelectorAll('.toggle-password i').forEach(ic => {
+            ic.classList.add('bi-eye');
+            ic.classList.remove('bi-eye-slash');
+        });
+    });
+    modal.addEventListener('shown.bs.modal', () => document.getElementById('new_password1').focus());
 })();
 </script>
 {% endblock %}

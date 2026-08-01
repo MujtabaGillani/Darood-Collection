@@ -1,5 +1,9 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.forms import (
+    AuthenticationForm,
+    SetPasswordForm,
+    UserCreationForm,
+)
 
 from .models import User
 
@@ -60,6 +64,22 @@ class UserManagementForm(BootstrapMixin, forms.ModelForm):
     class Meta:
         model = User
         fields = ('is_active', 'role')
+
+
+class AdminSetPasswordForm(BootstrapMixin, SetPasswordForm):
+    """Superadmin sets another user's password from the dashboard.
+
+    ``SetPasswordForm`` already gives us the two password fields, the
+    "passwords must match" check and the configured password validators — the
+    current password is not needed because the superadmin is not the owner.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['new_password1'].label = 'New password'
+        self.fields['new_password2'].label = 'Confirm password'
+        for field in self.fields.values():
+            field.widget.attrs['autocomplete'] = 'new-password'
 
 
 # Default password given to users quick-added by a manager / superadmin.

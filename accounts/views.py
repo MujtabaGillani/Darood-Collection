@@ -10,6 +10,7 @@ from django.views.generic import CreateView, RedirectView, TemplateView, View
 
 from .forms import (
     QUICK_ADD_DEFAULT_PASSWORD,
+    AdminSetPasswordForm,
     LoginForm,
     QuickAddUserForm,
     RegisterForm,
@@ -146,7 +147,7 @@ class DashboardView(SuperadminRequiredMixin, TemplateView):
 
 
 class UpdateUserView(SuperadminRequiredMixin, View):
-    """Toggle activation and/or change a user's role from the dashboard."""
+    """Toggle activation, change a user's role or reset their password."""
 
     # Roles a superadmin may assign from the dashboard (Super Admin excluded).
     ASSIGNABLE_ROLES = {User.Role.SIMPLE, User.Role.MANAGER}
@@ -183,6 +184,19 @@ class UpdateUserView(SuperadminRequiredMixin, View):
                 )
             else:
                 messages.error(request, _('You can only assign Simple User or Manager.'))
+
+        elif action == 'set_password':
+            # New password twice; the form applies Django's password validators.
+            form = AdminSetPasswordForm(target, request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(
+                    request, _('Password updated for %(name)s.') % {'name': target.full_name}
+                )
+            else:
+                for errors in form.errors.values():
+                    for error in errors:
+                        messages.error(request, error)
         else:
             messages.error(request, _('Unknown action.'))
 

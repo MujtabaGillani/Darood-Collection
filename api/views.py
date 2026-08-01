@@ -34,6 +34,7 @@ from darood.views import _multi_series, approved_entries
 
 from .permissions import CanAddDarood, IsSuperadmin
 from .serializers import (
+    AdminSetPasswordSerializer,
     ChangePasswordSerializer,
     DaroodEntrySerializer,
     LoginSerializer,
@@ -255,6 +256,29 @@ class UserUpdateView(APIView):
             target.is_active = data['is_active']
         target.save()
         return Response(UserSerializer(target).data)
+
+
+class UserSetPasswordView(APIView):
+    """Super admin: set another user's password (mirrors the dashboard dialog).
+
+    Stored passwords are hashed, so there is nothing to read back — this only
+    writes a new one. The target's existing web sessions stop working as soon
+    as it changes; already-issued JWTs stay valid until they expire.
+    """
+
+    permission_classes = [IsSuperadmin]
+
+    def post(self, request, pk):
+        target = get_object_or_404(User, pk=pk)
+        if target.is_superadmin:
+            return Response(
+                {'detail': 'Super Admin passwords cannot be changed here.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = AdminSetPasswordSerializer(data=request.data, target=target)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'detail': f'Password updated for {target.full_name}.'})
 
 
 # ---------------------------------------------------------------------------

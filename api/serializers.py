@@ -106,6 +106,32 @@ class ChangePasswordSerializer(serializers.Serializer):
         return user
 
 
+class AdminSetPasswordSerializer(serializers.Serializer):
+    """Super admin sets someone else's password: new password twice, no current.
+
+    The target user is passed in by the view so the validators can check the
+    new password against *their* username/name, not the admin's.
+    """
+
+    new_password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+    new_password2 = serializers.CharField(write_only=True, style={'input_type': 'password'})
+
+    def __init__(self, *args, target=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.target = target
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['new_password2']:
+            raise serializers.ValidationError({'new_password2': 'The two passwords do not match.'})
+        password_validation.validate_password(attrs['new_password'], self.target)
+        return attrs
+
+    def save(self, **kwargs):
+        self.target.set_password(self.validated_data['new_password'])
+        self.target.save(update_fields=['password'])
+        return self.target
+
+
 class QuickAddUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

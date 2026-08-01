@@ -169,8 +169,68 @@ container makes the two disagree, so every POST is rejected. Fix it by setting
 `proxy_set_header Host $http_host;`, which keeps the port intact). The exact
 reason is logged to `docker logs` even with `DEBUG=False`.
 
+## CI/CD
+
+[`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml) runs on every push
+and pull request:
+
+| Job | What it does | Gates the deploy? |
+|-----|--------------|-------------------|
+| `test` | `manage.py check`, `makemigrations --check` (fails if a model changed without a migration), `manage.py test` | yes |
+| `build` | `docker build` of the real Dockerfile, so a broken build or `collectstatic` failure shows up here | yes |
+| `deploy` | SSH to the server, fast-forward to `origin/main`, run [`scripts/deploy.sh`](scripts/deploy.sh) | — |
+
+`deploy` only runs for pushes to `main` that pass both other jobs. Use the
+**Run workflow** button (`workflow_dispatch`) to redeploy the current `main`
+without pushing. Deploys are serialised — a second push waits rather than
+interrupting a build in progress.
+
+### One-time setup
+
+Generate a key pair for the runner to log in with, on the server:
+
+```bash
+ssh-keygen -t ed25519 -C 'github-actions-deploy' -f ~/.ssh/gh_deploy -N ''
+cat ~/.ssh/gh_deploy.pub >> ~/.ssh/authorized_keys
+cat ~/.ssh/gh_deploy          # the private key -> DEPLOY_SSH_KEY secret
+ssh-keyscan -H <server-ip>    # -> DEPLOY_KNOWN_HOSTS secret
+```
+
+Then add these under **Settings → Secrets and variables → Actions**:
+
+| Secret | Value |
+|--------|-------|
+| `DEPLOY_SSH_KEY` | Contents of `~/.ssh/gh_deploy` (the private key, including the BEGIN/END lines) |
+| `DEPLOY_KNOWN_HOSTS` | Output of `ssh-keyscan -H <server-ip>` — pins the host key so a spoofed server can't collect your key |
+| `DEPLOY_HOST` | Server IP or hostname |
+| `DEPLOY_USER` | `serveradmin` |
+| `DEPLOY_PATH` | `/srv/hosting/apps/Darood-Collection` |
+| `DEPLOY_PORT` | Only if SSH isn't on 22 |
+
+The deploy user needs to run `docker` without a password prompt:
+`sudo usermod -aG docker serveradmin` (log out and back in to take effect).
+
+### What the deploy does differently from doing it by hand
+
+`scripts/deploy.sh` replaces `docker compose down && docker compose up --build -d`
+with a single `docker compose up -d --build`. Same result, but the old container
+keeps serving traffic *during* the build instead of the site being down for it —
+`down` is only necessary when networks or volumes change shape. The script then
+polls the app through nginx until it returns 200 and **fails the workflow** with
+`docker compose ps` and the last 60 log lines if it doesn't, so a broken deploy
+is visible in GitHub rather than only in your browser. Migrations still run in
+[`docker/entrypoint.sh`](docker/entrypoint.sh) on container start.
+
+To roll back, revert the commit on `main` and let the pipeline deploy it, or on
+the server: `git reset --hard <good-sha> && bash scripts/deploy.sh`.
+
 ## Notes for production
 
 The settings read all of the above from the environment, so no code changes are
 needed to deploy. To swap SQLite for Postgres/MySQL, update `DATABASES` in
 `config/settings.py` (and add the driver to `requirements.txt`).
+
+The pipeline builds on the production host, which is fine at this size but
+competes with the running app for CPU. If that starts to hurt, switch to
+building in CI and pushing to GHCR, then have the server `docker compose pull`
+a tagged image instead of `--build`.

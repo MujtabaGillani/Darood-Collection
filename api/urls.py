@@ -23,6 +23,7 @@ urlpatterns = [
     path('users/quick-add/', views.QuickAddUserView.as_view(), name='quick_add_user'),
     path('users/<int:pk>/', views.UserDetailView.as_view(), name='user_detail'),
     path('users/<int:pk>/update/', views.UserUpdateView.as_view(), name='user_update'),
+    path('users/<int:pk>/set-password/', views.UserSetPasswordView.as_view(), name='user_set_password'),
 
     # Darood
     path('darood/record/', views.RecordDaroodView.as_view(), name='darood_record'),
