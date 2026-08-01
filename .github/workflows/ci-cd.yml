@@ -108,12 +108,17 @@ jobs:
           set -euo pipefail
           cd "${DEPLOY_PATH:-/srv/hosting/apps/Darood-Collection}"
 
-          # `reset --hard` discards edits to tracked files. .env and the
-          # compose override are gitignored so they survive, but say so
-          # loudly if anything else is about to be thrown away.
+          # Refuse to deploy over uncommitted edits to tracked files. This used
+          # to warn and continue, and `reset --hard` silently destroyed a
+          # server-local docker-compose.yml that held the nginx network config
+          # -- taking the site down. Config that production needs belongs in
+          # git; anything else is a deliberate decision for a human to make.
           if ! git diff --quiet HEAD; then
-            echo "WARNING: discarding local changes to tracked files:"
+            echo "::error::Tracked files have uncommitted changes on the server."
             git status --short
+            echo "Commit them to the repo, or discard them deliberately on the"
+            echo "server with 'git checkout -- <path>', then re-run this deploy."
+            exit 1
           fi
 
           echo "==> Fetching origin/main"
