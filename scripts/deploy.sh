@@ -19,11 +19,30 @@ cd "$(dirname "$0")/.."
 
 log() { printf '==> %s\n' "$*"; }
 
+# The prod overlay puts the container on nginx's proxy_net. Every compose call
+# below needs the same -f set, or it addresses a different project.
+COMPOSE=(docker compose -f docker-compose.yml)
+if [ -f docker-compose.prod.yml ]; then
+    COMPOSE+=(-f docker-compose.prod.yml)
+    log "Using docker-compose.prod.yml overlay"
+fi
+
 log "Building and recreating containers"
 # No `docker compose down` first: compose swaps the container in place, so the
 # outage is the few seconds gunicorn needs to boot rather than the whole build.
 # You only need `down` when networks or volumes change shape.
-docker compose up -d --build --remove-orphans
+"${COMPOSE[@]}" up -d --build --remove-orphans
+
+# nginx resolves a named upstream once at startup and caches the IP for the
+# life of the worker, so a recreated container is unreachable until it re-reads
+# its config -- a 502 with "Host is unreachable" on the old address.
+if docker ps --format '{{.Names}}' | grep -qx infra_nginx; then
+    if docker exec infra_nginx nginx -s reload 2>/dev/null; then
+        log "Reloaded infra_nginx so it re-resolves the upstream"
+    else
+        log "WARNING: could not reload infra_nginx; a stale upstream IP may 502"
+    fi
+fi
 
 log "Waiting up to ${HEALTH_TIMEOUT}s for $HEALTH_URL"
 code=000
@@ -37,9 +56,14 @@ done
 if [ "$code" != "200" ]; then
     log "DEPLOY FAILED: last response was HTTP $code"
     log "Container status:"
-    docker compose ps
+    "${COMPOSE[@]}" ps
+    log "Networks the container joined (must include proxy_net):"
+    docker inspect darood-collection \
+        --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}' || true
     log "Last 60 log lines:"
-    docker compose logs --tail 60 --no-color
+    "${COMPOSE[@]}" logs --tail 60 --no-color
+    log "Last 10 nginx errors:"
+    docker logs --tail 10 infra_nginx 2>&1 | tail -10 || true
     exit 1
 fi
 

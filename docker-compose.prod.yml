@@ -1,0 +1,21 @@
+# Production overlay for server-prod-01. Applied on top of docker-compose.yml
+# by scripts/deploy.sh:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# This exists because production topology used to live as an uncommitted edit to
+# docker-compose.yml, which the deploy's `git reset --hard` destroyed. Keeping it
+# in git means the pipeline reproduces the real setup instead of overwriting it.
+services:
+  web:
+    # infra_nginx terminates TLS and proxies :8085 to this container by name on
+    # proxy_net. Declaring a network here also drops the service off the compose
+    # default network, which is what we want -- nothing else needs to reach it.
+    networks:
+      - proxy_net
+
+networks:
+  # Created and owned by the infra stack (the one running infra_nginx), so it is
+  # referenced rather than defined. `docker network ls` must already list it.
+  proxy_net:
+    external: true

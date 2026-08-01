@@ -6,8 +6,11 @@ services:
     image: darood-collection
     container_name: darood-collection
     restart: unless-stopped
+    # Bound to loopback deliberately. In production nginx reaches the container
+    # over proxy_net (see docker-compose.prod.yml), so 8000 must never be
+    # published to the internet -- that would bypass the proxy entirely.
     ports:
-      - "${HOST_PORT:-8000}:8000"
+      - "127.0.0.1:${HOST_PORT:-8000}:8000"
     environment:
       - DJANGO_DEBUG=${DJANGO_DEBUG:-False}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-change-me-please-set-a-real-secret}
