@@ -20,6 +20,7 @@ from .forms import (
 from .models import DaroodEntry, ReserveTransaction
 from .services import (
     PERIODS,
+    activity_extremes,
     filled_time_series,
     filter_by_period,
     reserve_summary,
@@ -35,9 +36,34 @@ def approved_entries():
     return DaroodEntry.objects.filter(status=DaroodEntry.Status.APPROVED)
 
 
-def _current_period(request):
-    period = request.GET.get('period', 'month')
-    return period if period in {k for k, _ in PERIODS} else 'month'
+def _current_period(request, default='month'):
+    """Period from ``?period=``, falling back to the page's own default.
+
+    The Overview lands on 'all' so the whole record is visible at a glance; the
+    personal pages stay on 'month', which is the useful window for "how am I
+    doing right now".
+    """
+    period = request.GET.get('period', default)
+    return period if period in {k for k, _ in PERIODS} else default
+
+
+def _empty_period_hint(queryset, period, total):
+    """Point at a wider period when the chosen one is empty but data exists.
+
+    Keeps the honest "This Month is empty" answer on screen while saving the
+    reader a hunt through the period pills. Returns ``None`` when the current
+    period has darood, or when there is genuinely nothing recorded at all.
+    """
+    if total or period == 'all':
+        return None
+    labels = dict(PERIODS)
+    for key in ('year', 'all'):
+        if key == period:
+            continue
+        wider = total_count(filter_by_period(queryset, key))
+        if wider:
+            return {'period': key, 'label': labels[key], 'total': wider}
+    return None
 
 
 def _reserve_context(user, reserve_add_form=None, reserve_use_form=None):
@@ -285,7 +311,7 @@ class DaroodOverviewView(LoginRequiredMixin, TemplateView):
         from django.db.models import Sum
 
         ctx = super().get_context_data(**kwargs)
-        period = _current_period(self.request)
+        period = _current_period(self.request, default='all')
         entries = filter_by_period(approved_entries(), period)
 
         ctx['period'] = period
@@ -299,6 +325,8 @@ class DaroodOverviewView(LoginRequiredMixin, TemplateView):
             .order_by('-total')[:10]
         )
         ctx['recent'] = entries.select_related('user', 'recorded_by')[:20]
+        ctx['period_hint'] = _empty_period_hint(approved_entries(), period, ctx['total'])
+        ctx['activity'] = activity_extremes(entries)
         return ctx
 
 
@@ -324,6 +352,11 @@ class MyProgressView(LoginRequiredMixin, TemplateView):
         ctx['pending_count'] = mine.filter(status=DaroodEntry.Status.PENDING).count()
         ctx['recent'] = mine.select_related('manager', 'recorded_by')[:20]
         ctx['target_user'] = self.request.user
+        ctx['period_hint'] = _empty_period_hint(
+            mine.filter(status=DaroodEntry.Status.APPROVED), period, ctx['total']
+        )
+        # Site-wide (not just this user's) leaders for the same period.
+        ctx['activity'] = activity_extremes(filter_by_period(approved_entries(), period))
         return ctx
 
 
@@ -351,6 +384,9 @@ class UserDetailView(CanAddDaroodMixin, TemplateView):
         ctx['total'] = total_count(entries)
         ctx['entry_count'] = entries.count()
         ctx['recent'] = entries.select_related('recorded_by')[:30]
+        ctx['period_hint'] = _empty_period_hint(
+            approved_entries().filter(user=target), period, ctx['total']
+        )
         return ctx
 
 

@@ -1,9 +1,10 @@
 """Query helpers for filtering and aggregating darood entries."""
 
-from datetime import date, timedelta
+from datetime import timedelta
 
 from django.db.models import Sum
 from django.db.models.functions import TruncDay, TruncMonth, TruncWeek, TruncYear
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 # Supported reporting periods (label shown in the UI -> key used in querystrings).
@@ -29,9 +30,10 @@ def period_range(period, today=None):
     """Return an inclusive ``(start, end)`` date pair for a period.
 
     ``None`` for either bound means "unbounded". ``today`` defaults to the
-    real current date but can be injected for testing.
+    current date in the project timezone (not the server's clock, which may be
+    UTC in production) but can be injected for testing.
     """
-    today = today or date.today()
+    today = today or timezone.localdate()
 
     if period == 'day':
         return today, today
@@ -64,6 +66,43 @@ def filter_by_period(queryset, period, today=None):
 
 def total_count(queryset):
     return queryset.aggregate(total=Sum('count'))['total'] or 0
+
+
+def activity_extremes(queryset):
+    """Highest- and lowest-scoring reciter in an already period-filtered queryset.
+
+    Ranks everyone who actually recorded darood — simple users, managers and
+    admins alike — so the pair moves with whatever period the page is showing.
+    People with nothing in the period are not ranked at all; "least active"
+    means the smallest real contribution, not a zero.
+
+    Returns ``{'most': ..., 'least': ...}``; ``most`` is ``None`` when nobody
+    recorded anything, and ``least`` is ``None`` when only one person did
+    (naming the same person twice says nothing).
+    """
+    rows = list(
+        queryset.values(
+            'user_id', 'user__username', 'user__first_name', 'user__last_name'
+        )
+        .annotate(total=Sum('count'))
+        .order_by('-total', 'user__username')
+    )
+    if not rows:
+        return {'most': None, 'least': None}
+
+    def entry(row):
+        name = f"{row['user__first_name']} {row['user__last_name']}".strip()
+        return {
+            'id': row['user_id'],
+            'name': name or row['user__username'],
+            'username': row['user__username'],
+            'total': row['total'] or 0,
+        }
+
+    return {
+        'most': entry(rows[0]),
+        'least': entry(rows[-1]) if len(rows) > 1 else None,
+    }
 
 
 def reserve_summary(user):
